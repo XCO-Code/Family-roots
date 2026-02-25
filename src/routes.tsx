@@ -3,6 +3,8 @@ import Login from './pages/login/Login';
 import Register from './pages/register/Register';
 import Dashboard from './pages/dashboard/Dashboard';
 import TreeViewer from './pages/tree-viewer/TreeViewer';
+import CreateTree from './pages/create-tree/CreateTree';
+import TreeEditor from './pages/tree-editor/TreeEditor';
 import Extension from './pages/extension/Extension';
 
 const routes = [
@@ -20,7 +22,15 @@ const routes = [
   },
   {
     path: '/tree-viewer/:treeId',
-    element: <TreeViewer />,
+    element: <TreeViewer />, 
+  },
+  {
+    path: '/create-tree',
+    element: <CreateTree />, 
+  },
+  {
+    path: '/tree-editor/:treeId',
+    element: <TreeEditor />, 
   },
   {
     path: '/extension',

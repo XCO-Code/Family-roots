@@ -14,7 +14,7 @@ export default function Dashboard() {
   // cambiar por el componentes para proteger la rama.
   useEffect(() => {
     if (!user) {
-      navigate('/login');
+      navigate('/');
     } else {
       getAllTrees();
     }
@@ -22,7 +22,7 @@ export default function Dashboard() {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/');
   };
 
   return (
@@ -68,7 +68,7 @@ export default function Dashboard() {
                     <div
                       key={tree.id}
                       className="bg-[#111318] border border-[#207d98]/30 rounded-lg p-4 hover:border-[#2bacc8] transition-colors cursor-pointer"
-                      onClick={() => navigate(`/tree-viewer/${tree.id}`)}
+                      onClick={() => navigate(`/tree-editor/${tree.id}`)}
                     >
                       <h3 className="text-lg font-semibold text-[#2bacc8] mb-2">{tree.name}</h3>
                       <p className="text-sm text-[#207d98]">{tree.description || 'Sin descripción'}</p>

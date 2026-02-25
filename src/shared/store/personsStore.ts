@@ -9,9 +9,9 @@ interface PersonsStore {
   error: string | null;
 
   getAllPersons: (tree_id: string) => Promise<void>;
-  getPersonById: (id: string) => Promise<void>;
-  createPerson: (dto: CreatePersonDto) => Promise<void>;
-  updatePerson: (id: string, dto: UpdatePersonDto) => Promise<void>;
+  getPersonById: (id: string) => Promise<Person>;
+  createPerson: (dto: CreatePersonDto) => Promise<Person>;
+  updatePerson: (id: string, dto: UpdatePersonDto) => Promise<Person>;
   deletePerson: (id: string) => Promise<void>;
   setSelected: (person: Person | null) => void;
   clearPersons: () => void;
@@ -39,8 +39,10 @@ export const usePersonsStore = create<PersonsStore>((set) => ({
     try {
       const selectedPerson = await personsService.getPersonById(id);
       set({ selectedPerson, loading: false });
+      return selectedPerson;
     } catch (e) {
       set({ error: (e as Error).message, loading: false });
+      throw e;
     }
   },
 
@@ -49,8 +51,10 @@ export const usePersonsStore = create<PersonsStore>((set) => ({
     try {
       const newPerson = await personsService.createPerson(dto);
       set((state) => ({ persons: [...state.persons, newPerson], loading: false }));
+      return newPerson;
     } catch (e) {
       set({ error: (e as Error).message, loading: false });
+      throw e;
     }
   },
 
@@ -63,8 +67,10 @@ export const usePersonsStore = create<PersonsStore>((set) => ({
         persons: state.persons.map((p) => (p.id === id ? updated : p)),
         selectedPerson: state.selectedPerson?.id === id ? updated : state.selectedPerson,
       }));
+      return updated;
     } catch (e) {
       set({ error: (e as Error).message, loading: false });
+      throw e;
     }
   },
 

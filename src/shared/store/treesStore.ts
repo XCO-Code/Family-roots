@@ -10,8 +10,8 @@ interface TreesStore {
 
   getAllTrees: () => Promise<void>;
   getTreeById: (id: string) => Promise<void>;
-  createTree: (dto: TreeDto) => Promise<void>;
-  updateTree: (id: string, dto: TreeDto) => Promise<void>;
+  createTree: (dto: TreeDto) => Promise<Tree>;
+  updateTree: (id: string, dto: TreeDto) => Promise<Tree>;
   deleteTree: (id: string) => Promise<void>;
   setSelected: (tree: Tree | null) => void;
   clearError: () => void;
@@ -48,8 +48,10 @@ export const useTreesStore = create<TreesStore>((set) => ({
     try {
       const newTree = await treesService.createTree(dto);
       set((state) => ({ trees: [newTree, ...state.trees], loading: false }));
+      return newTree;
     } catch (e) {
       set({ error: (e as Error).message, loading: false });
+      throw e;
     }
   },
 
@@ -62,8 +64,10 @@ export const useTreesStore = create<TreesStore>((set) => ({
         trees: state.trees.map((t) => (t.id === id ? updated : t)),
         selectedTree: state.selectedTree?.id === id ? updated : state.selectedTree,
       }));
+      return updated;
     } catch (e) {
       set({ error: (e as Error).message, loading: false });
+      throw e;
     }
   },
 
