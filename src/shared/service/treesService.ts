@@ -49,6 +49,7 @@ export const updateTree = async (id: string, dto: TreeDto): Promise<Tree> => {
   return data;
 };
 
+
 export const deleteTree = async (id: string): Promise<void> => {
   const { error } = await supabase
     .from('trees')

@@ -1,5 +1,3 @@
-// src/services/authService.ts
-
 import { supabase } from '../../config/supabase/supabase';
 import type { AuthUser, AuthDto, AuthResponse } from '../models/authModel';
 
