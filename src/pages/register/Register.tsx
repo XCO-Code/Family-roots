@@ -3,18 +3,18 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 import { useAuthStore } from '../../shared/store/authStore';
 
-export default function Login() {
+export default function Register() {
   const navigate = useNavigate();
-  const login = useAuthStore((s) => s.login);
-  const loading = useAuthStore((s) => s.loading);
-  const error = useAuthStore((s) => s.error);
+  const register = useAuthStore((s) => s.register);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
+  const loading = useAuthStore((s) => s.loading);
+  const error = useAuthStore((s) => s.error);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login({ email, password });
+    await register({ email, password });
     if (!error) {
       navigate('/dashboard');
     }
@@ -28,8 +28,8 @@ export default function Login() {
           <LogIn size={20} className="text-[#2bacc8]" />
         </div>
 
-        <h1 className="text-xl font-semibold text-[#2bacc8] mb-1">Iniciar sesión</h1>
-        <p className="text-sm text-[#207d98] mb-8">Bienvenido de nuevo</p>
+        <h1 className="text-xl font-semibold text-[#2bacc8] mb-1">Crear cuenta</h1>
+        <p className="text-sm text-[#207d98] mb-8">Únete a Family Roots hoy</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
@@ -51,14 +51,9 @@ export default function Login() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <div className="flex justify-between items-center">
-              <label className="text-xs font-medium text-[#207d98] uppercase tracking-wider">
-                Contraseña
-              </label>
-              <span className="text-xs text-[#207d98] hover:text-[#2bacc8] cursor-pointer transition-colors">
-                ¿Olvidaste?
-              </span>
-            </div>
+            <label className="text-xs font-medium text-[#207d98] uppercase tracking-wider">
+              Contraseña
+            </label>
             <div className="relative">
               <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#207d98] pointer-events-none" />
               <input
@@ -72,7 +67,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => setShowPass(!showPass)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#207d98] hover:text-[#2bacc8] transition-colors cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#207d98] hover:text-[#2bacc8] transition-colors"
               >
                 {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
               </button>
@@ -81,21 +76,16 @@ export default function Login() {
 
           {error && <p className="text-sm text-red-400">{error}</p>}
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-1 py-2.5 rounded-lg text-sm font-semibold bg-[#207d98] hover:bg-[#2bacc8] text-[#07141d] flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 cursor-pointer disabled:opacity-50"
+            className="w-full py-2.5 bg-[#2bacc8] hover:bg-[#207d98] text-[#111318] font-medium rounded-lg transition-colors mt-2 disabled:opacity-50"
           >
-            <LogIn size={15} />
-            {loading ? 'Iniciando...' : 'Entrar'}
+            {loading ? 'Registrando...' : 'Registrarse'}
           </button>
 
-          <p className="text-center text-xs text-[#207d98]/60 mt-1">
-            ¿No tienes cuenta?{' '}
-            <Link to="/register" className="text-[#2bacc8] font-medium cursor-pointer hover:underline">
-              Regístrate
-            </Link>
+          <p className="text-xs text-center text-[#207d98]">
+            ¿Ya tienes cuenta? <Link to="/login" className="text-[#2bacc8] hover:underline">Inicia sesión</Link>
           </p>
 
         </form>
