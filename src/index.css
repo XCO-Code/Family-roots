@@ -1,1 +1,7 @@
 @import "tailwindcss";
+
+/* custom palette */
+.color2 { color: #0c2c41; }
+.color3 { color: #15516a; }
+.color4 { color: #207d98; }
+.color5 { color: #2bacc8; }
