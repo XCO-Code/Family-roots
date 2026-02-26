@@ -35,8 +35,8 @@ import {
   UserCircle,
 } from 'lucide-react';
 
-import { useTreesStore }    from '../../shared/store/treesStore';
-import { usePersonsStore }  from '../../shared/store/personsStore';
+import { useTreesStore } from '../../shared/store/treesStore';
+import { usePersonsStore } from '../../shared/store/personsStore';
 import { usePartnersStore } from '../../shared/store/partnersStore';
 import type { Person, CreatePersonDto, UpdatePersonDto, Gender } from '../../shared/models/personModel';
 
@@ -137,112 +137,146 @@ function PersonNode({ data }: NodeProps) {
 
 export const nodeTypes = { person: PersonNode };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Layout engine — Reingold-Tilford recursivo
+//
+// Idea central:
+//   1. Cada nodo ocupa un "ancho" mínimo de NODE_W.
+//   2. El ancho real de un nodo es MAX(NODE_W, suma de anchos de sus hijos).
+//   3. Los hijos se distribuyen centrados bajo su padre.
+//   4. Las ramas nunca se solapan porque el ancho se propaga bottom-up.
+//   5. Si una persona tiene dos padres en el árbol se conecta solo al padre
+//      (o a la madre si no hay padre) para no duplicar ramas.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const NODE_W = 230; // ancho del nodo + margen horizontal mínimo
+const NODE_H = 180; // alto del nodo + espacio vertical entre generaciones
+
 function buildGraphElements(
   persons: Person[],
-  partners: import('../../shared/models/partnerModel').Partner[],
   selectedId: string | null,
   onSelect: (p: Person) => void,
 ): { nodes: Node[]; edges: Edge[] } {
-  // Calcular generación de cada persona (BFS desde raíces)
-  const generationMap = new Map<string, number>();
-  const childrenOf = new Map<string, string[]>();
+
+  if (persons.length === 0) return { nodes: [], edges: [] };
+
+  const personIds = new Set(persons.map((p) => p.id));
+
+  // ── 1. Construir mapa de hijos canonicos (un padre por hijo) ───────────────
+  // Para evitar doble conteo, cada hijo tiene UN padre canónico:
+  // preferimos father_id si existe en el árbol, si no mother_id.
+  const canonicalParent = new Map<string, string>(); // childId → parentId
+  const childrenOf      = new Map<string, string[]>(); // parentId → [childId]
 
   persons.forEach((p) => {
-    if (p.father_id) {
-      childrenOf.set(p.father_id, [...(childrenOf.get(p.father_id) ?? []), p.id]);
-    }
-    if (p.mother_id) {
-      childrenOf.set(p.mother_id, [...(childrenOf.get(p.mother_id) ?? []), p.id]);
-    }
+    const pid = p.father_id && personIds.has(p.father_id)
+      ? p.father_id
+      : p.mother_id && personIds.has(p.mother_id)
+      ? p.mother_id
+      : null;
+
+    if (!pid) return;
+    canonicalParent.set(p.id, pid);
+    childrenOf.set(pid, [...(childrenOf.get(pid) ?? []), p.id]);
   });
 
-  // Raíces = personas sin padre ni madre en el árbol
-  const personIds = new Set(persons.map((p) => p.id));
-  const roots = persons.filter(
-    (p) =>
-      (!p.father_id || !personIds.has(p.father_id)) &&
-      (!p.mother_id || !personIds.has(p.mother_id)),
-  );
+  // ── 2. Calcular generación por BFS desde raíces ────────────────────────────
+  const generationMap = new Map<string, number>();
+  const roots = persons.filter((p) => !canonicalParent.has(p.id));
 
   const queue: Array<{ id: string; gen: number }> = roots.map((r) => ({ id: r.id, gen: 0 }));
   while (queue.length) {
     const { id, gen } = queue.shift()!;
     if (generationMap.has(id)) continue;
     generationMap.set(id, gen);
-    (childrenOf.get(id) ?? []).forEach((childId) => queue.push({ id: childId, gen: gen + 1 }));
+    (childrenOf.get(id) ?? []).forEach((cid) => queue.push({ id: cid, gen: gen + 1 }));
   }
-  // personas que no se alcanzaron por BFS
+  // nodos no alcanzados (ciclos o desconectados) → generación 0
   persons.forEach((p) => { if (!generationMap.has(p.id)) generationMap.set(p.id, 0); });
 
-  // Agrupar por generación para calcular posición X
-  const genGroups = new Map<number, string[]>();
-  generationMap.forEach((gen, id) => {
-    genGroups.set(gen, [...(genGroups.get(gen) ?? []), id]);
+  // ── 3. Calcular el "ancho de subárbol" de cada nodo (bottom-up) ────────────
+  // subtreeWidth(node) = max(NODE_W, Σ subtreeWidth(children))
+  // Se calcula en orden de generación descendente para garantizar
+  // que los hijos ya tienen su ancho calculado antes que los padres.
+  const subtreeWidth = new Map<string, number>();
+
+  const maxGen = Math.max(...Array.from(generationMap.values()));
+
+  for (let g = maxGen; g >= 0; g--) {
+    persons
+      .filter((p) => generationMap.get(p.id) === g)
+      .forEach((p) => {
+        const kids = childrenOf.get(p.id) ?? [];
+        if (kids.length === 0) {
+          subtreeWidth.set(p.id, NODE_W);
+        } else {
+          const total = kids.reduce((sum, kid) => sum + (subtreeWidth.get(kid) ?? NODE_W), 0);
+          subtreeWidth.set(p.id, Math.max(NODE_W, total));
+        }
+      });
+  }
+
+  // ── 4. Asignar posición X recursivamente (top-down) ────────────────────────
+  // Cada llamada recibe el "left bound" disponible para ese subárbol.
+  const positionMap = new Map<string, { x: number; y: number }>();
+
+  function assignX(id: string, leftBound: number): void {
+    const gen   = generationMap.get(id) ?? 0;
+    const width = subtreeWidth.get(id) ?? NODE_W;
+    const x     = leftBound + width / 2 - NODE_W / 2; // centrado dentro del ancho
+    const y     = gen * NODE_H;
+    positionMap.set(id, { x, y });
+
+    const kids = childrenOf.get(id) ?? [];
+    let cursor = leftBound;
+    kids.forEach((kid) => {
+      const kidWidth = subtreeWidth.get(kid) ?? NODE_W;
+      assignX(kid, cursor);
+      cursor += kidWidth;
+    });
+  }
+
+  // Procesar cada árbol raíz, uno a la derecha del otro con separación extra
+  const ROOT_GAP = NODE_W * 0.5; // espacio extra entre árboles distintos
+  let rootCursor = 0;
+  roots.forEach((r) => {
+    assignX(r.id, rootCursor);
+    rootCursor += (subtreeWidth.get(r.id) ?? NODE_W) + ROOT_GAP;
   });
 
-  const NODE_W = 192 + 40; // node width + gap
-  const NODE_H = 200;      // vertical spacing
+  // Nodos huérfanos no alcanzados
+  persons.forEach((p) => {
+    if (!positionMap.has(p.id)) {
+      positionMap.set(p.id, { x: rootCursor, y: 0 });
+      rootCursor += NODE_W;
+    }
+  });
 
+  // ── 5. Construir nodos React Flow ──────────────────────────────────────────
   const nodes: Node[] = persons.map((p) => {
-    const gen = generationMap.get(p.id) ?? 0;
-    const group = genGroups.get(gen) ?? [p.id];
-    const idx = group.indexOf(p.id);
-    const total = group.length;
-    const x = (idx - (total - 1) / 2) * NODE_W;
-    const y = gen * NODE_H;
-
+    const pos = positionMap.get(p.id) ?? { x: 0, y: 0 };
     return {
-      id: p.id,
-      type: 'person',
-      position: { x, y },
+      id:       p.id,
+      type:     'person',
+      position: pos,
       data: {
-        person: p,
+        person:     p,
         isSelected: selectedId === p.id,
         onSelect,
-        generation: gen,
+        generation: generationMap.get(p.id) ?? 0,
       } satisfies PersonNodeData,
     };
   });
 
+  // ── 6. Construir edges ─────────────────────────────────────────────────────
   const edges: Edge[] = [];
-
-  // Padre → hijo  /  Madre → hijo
-  persons.forEach((p) => {
-    if (p.father_id && personIds.has(p.father_id)) {
-      edges.push({
-        id: `f-${p.father_id}-${p.id}`,
-        source: p.father_id,
-        target: p.id,
-        type: 'smoothstep',
-        style: { stroke: '#38bdf8', strokeWidth: 1.5, opacity: 0.6 },
-        animated: false,
-      });
-    }
-    if (p.mother_id && personIds.has(p.mother_id)) {
-      edges.push({
-        id: `m-${p.mother_id}-${p.id}`,
-        source: p.mother_id,
-        target: p.id,
-        type: 'smoothstep',
-        style: { stroke: '#f472b6', strokeWidth: 1.5, opacity: 0.6 },
-        animated: false,
-      });
-    }
-  });
-
-  // Parejas (línea horizontal punteada)
-  const drawn = new Set<string>();
-  partners.forEach((pt) => {
-    const key = [pt.person_id, pt.partner_id].sort().join('-');
-    if (drawn.has(key)) return;
-    if (!personIds.has(pt.person_id) || !personIds.has(pt.partner_id)) return;
-    drawn.add(key);
+  canonicalParent.forEach((parentId, childId) => {
     edges.push({
-      id: `p-${key}`,
-      source: pt.person_id,
-      target: pt.partner_id,
-      type: 'straight',
-      style: { stroke: '#a78bfa', strokeWidth: 1.5, strokeDasharray: '5 4', opacity: 0.5 },
+      id:     `e-${parentId}-${childId}`,
+      source: parentId,
+      target: childId,
+      type:   'smoothstep',
+      style:  { stroke: 'rgba(255,255,255,0.20)', strokeWidth: 1.5 },
     });
   });
 
@@ -694,13 +728,12 @@ export default function TreeEditor() {
   useEffect(() => {
     const { nodes: n, edges: e } = buildGraphElements(
       persons,
-      partners,
       selectedPerson?.id ?? null,
       handleSelectNode,
     );
     setNodes(n);
     setEdges(e);
-  }, [persons, partners, selectedPerson?.id, handleSelectNode]);
+  }, [persons, selectedPerson?.id, handleSelectNode]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleConnect = useCallback(
@@ -863,26 +896,6 @@ export default function TreeEditor() {
                 maskColor="rgba(0,0,0,0.4)"
               />
 
-              {/* Leyenda de colores de conexión */}
-              <Panel position="bottom-left">
-                <div className="
-                  bg-[#0f1117]/90 border border-white/8 rounded-xl px-3 py-2
-                  flex flex-col gap-1 text-xs
-                ">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-px bg-sky-400 opacity-70" />
-                    <span className="text-white/40">Línea paterna</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-px bg-pink-400 opacity-70" />
-                    <span className="text-white/40">Línea materna</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 border-t border-dashed border-violet-400 opacity-70" />
-                    <span className="text-white/40">Pareja</span>
-                  </div>
-                </div>
-              </Panel>
             </ReactFlow>
           )}
         </div>
