@@ -5,7 +5,7 @@ import Dashboard from './pages/dashboard/Dashboard';
 import TreeViewer from './pages/tree-viewer/TreeViewer';
 import CreateTree from './pages/create-tree/CreateTree';
 import TreeEditor from './pages/tree-editor/TreeEditor';
-import Extension from './pages/extension/Extension';
+import Extension from './pages/formExtension/FormExtension';
 
 const routes = [
   {
@@ -33,7 +33,7 @@ const routes = [
     element: <TreeEditor />, 
   },
   {
-    path: '/extension',
+    path: 'extend-family-tree/:treeId',
     element: <Extension />,
   },
 ];

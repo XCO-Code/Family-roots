@@ -15,8 +15,10 @@
     "@tailwindcss/vite": "^4.2.0",
     "@xyflow/react": "^12.10.1",
     "lucide-react": "^0.575.0",
+    "qr.react": "^0.0.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-qr-code": "^2.0.18",
     "react-router-dom": "^7.13.1",
     "tailwindcss": "^4.2.0",
     "zustand": "^5.0.11"

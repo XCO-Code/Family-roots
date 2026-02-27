@@ -16,7 +16,6 @@ import {
   type NodeProps,
   Handle,
   Position,
-  Panel,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -828,6 +827,18 @@ export default function TreeEditor() {
             <Plus size={13} />
             Agregar
           </button>
+          
+          <button
+            onClick={openCreate}
+            className="
+              flex items-center gap-2 px-3 py-1.5 rounded-xl
+              bg-teal-500/15 border border-teal-500/25 text-teal-300
+              hover:bg-teal-500/25 transition-all text-xs font-medium
+            "
+          >
+            extender
+          </button>
+
         </div>
       </nav>
 

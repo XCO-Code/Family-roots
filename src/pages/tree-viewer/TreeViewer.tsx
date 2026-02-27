@@ -1,16 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Share2 } from 'lucide-react';
+import { ExtensionQR } from '../../shared/components/extesion_qr';
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, addEdge, BackgroundVariant, type Node as RFNode, type Edge as RFEdge, type Connection } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useTreesStore } from '../../shared/store/treesStore';
 import { usePersonsStore } from '../../shared/store/personsStore';
-import { usePartnersStore } from '../../shared/store/partnersStore';
 import { buildGraphElements, nodeTypes } from '../tree-editor/TreeEditor';
 
 export default function TreeViewer() {
   const { treeId } = useParams<{ treeId: string }>();
   const navigate = useNavigate();
+  const [showQRModal, setShowQRModal] = useState(false);
 
   const tree = useTreesStore((s) => s.selectedTree);
   const getTreeById = useTreesStore((s) => s.getTreeById);
@@ -19,20 +20,12 @@ export default function TreeViewer() {
   const getAllPersons = usePersonsStore((s) => s.getAllPersons);
   const setSelectedPerson = usePersonsStore((s) => s.setSelected);
 
-  const partners = usePartnersStore((s) => s.partners);
-  const getPartnersFor = usePartnersStore((s) => s.getAllPartners);
-
   useEffect(() => {
     if (treeId) {
       getTreeById(treeId);
       getAllPersons(treeId);
     }
   }, [treeId, getTreeById, getAllPersons]);
-
-  useEffect(() => {
-    // fetch partners for each person when list changes
-    persons.forEach((p) => getPartnersFor(p.id));
-  }, [persons, getPartnersFor]);
 
   // build react-flow graph when persons/partners change
   const [nodes, setNodes, onNodesChange] = useNodesState<RFNode>([]);
@@ -41,7 +34,6 @@ export default function TreeViewer() {
   useEffect(() => {
     const { nodes: n, edges: e } = buildGraphElements(
       persons,
-      partners,
       null,
       (p) => {
         setSelectedPerson(p);
@@ -53,7 +45,7 @@ export default function TreeViewer() {
     setEdges(e as RFEdge[]);
     setNodes(n);
     setEdges(e);
-  }, [persons, partners, navigate, treeId, setSelectedPerson]);
+  }, [persons, navigate, treeId, setSelectedPerson]);
 
   const onConnect = (connection: Connection) => setEdges((eds) => addEdge(connection, eds));
 
@@ -69,14 +61,25 @@ export default function TreeViewer() {
         </button>
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-[#2bacc8] mt-3">{tree?.name || 'Árbol genealógico'}</h2>
-          {treeId && (
-            <button
-              onClick={() => navigate(`/tree-editor/${treeId}`)}
-              className="px-3 py-1 bg-[#2bacc8] hover:bg-[#207d98] text-[#111318] rounded transition-colors text-sm"
-            >
-              Editar árbol
-            </button>
-          )}
+          <div className="flex gap-3">
+            {treeId && (
+              <button
+                onClick={() => setShowQRModal(true)}
+                className="px-3 py-1 bg-[#2bacc8] hover:bg-[#207d98] text-[#111318] rounded transition-colors text-sm flex items-center gap-2"
+              >
+                <Share2 size={16} />
+                Extender
+              </button>
+            )}
+            {treeId && (
+              <button
+                onClick={() => navigate(`/tree-editor/${treeId}`)}
+                className="px-3 py-1 bg-[#2bacc8] hover:bg-[#207d98] text-[#111318] rounded transition-colors text-sm"
+              >
+                Editar árbol
+              </button>
+            )}
+          </div>
         </div>
       </div>
       <div className="flex-1 relative">
@@ -104,6 +107,9 @@ export default function TreeViewer() {
           />
         </ReactFlow>
       </div>
+      {showQRModal && treeId && (
+        <ExtensionQR treeId={treeId} onClose={() => setShowQRModal(false)} />
+      )}
     </div>
   );
 }
