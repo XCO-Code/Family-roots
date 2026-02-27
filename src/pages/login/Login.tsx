@@ -21,7 +21,7 @@ export default function Login() {
   };
 
   return (
-    <main className="min-h-screen bg-[#111318] flex items-center justify-center font-sans">
+    <main className="min-h-screen bg-[#0a0c10] flex items-center justify-center font-sans">
       <div className="w-full max-w-sm bg-[#1a1d24] border border-[#207d98]/20 rounded-2xl p-9">
 
         <div className="w-11 h-11 rounded-xl bg-[#07141d] border border-[#207d98]/30 flex items-center justify-center mb-7">
@@ -55,9 +55,7 @@ export default function Login() {
               <label className="text-xs font-medium text-[#207d98] uppercase tracking-wider">
                 Contraseña
               </label>
-              <span className="text-xs text-[#207d98] hover:text-[#2bacc8] cursor-pointer transition-colors">
-                ¿Olvidaste?
-              </span>
+
             </div>
             <div className="relative">
               <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#207d98] pointer-events-none" />

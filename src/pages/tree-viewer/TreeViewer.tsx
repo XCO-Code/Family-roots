@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Share2 } from 'lucide-react';
-import { ExtensionQR } from '../../shared/components/extesion_qr';
+import { Share2 } from 'lucide-react';
+import { ExtensionQR } from '../../shared/components/ExtesionQr';
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, addEdge, BackgroundVariant, type Node as RFNode, type Edge as RFEdge, type Connection } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useTreesStore } from '../../shared/store/treesStore';
@@ -36,7 +36,6 @@ export default function TreeViewer() {
       null,
       (p) => {
         setSelectedPerson(p);
-        navigate(`/tree-editor/${treeId}`);
       },
     );
     // cast results to RFNode/RFEdge generics
@@ -51,13 +50,7 @@ export default function TreeViewer() {
   return (
     <div className="w-full h-screen bg-[#111318] flex flex-col">
       <div className="bg-[#1a1d24] border-b border-[#207d98]/20 p-4">
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2 text-[#2bacc8] hover:text-[#207d98] transition-colors"
-        >
-          <ArrowLeft size={20} />
-          Volver al Dashboard
-        </button>
+
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-[#2bacc8] mt-3">{tree?.name || 'Árbol genealógico'}</h2>
           <div className="flex gap-3">
@@ -68,14 +61,6 @@ export default function TreeViewer() {
               >
                 <Share2 size={16} />
                 Extender
-              </button>
-            )}
-            {treeId && (
-              <button
-                onClick={() => navigate(`/tree-editor/${treeId}`)}
-                className="px-3 py-1 bg-[#2bacc8] hover:bg-[#207d98] text-[#111318] rounded transition-colors text-sm"
-              >
-                Editar árbol
               </button>
             )}
           </div>

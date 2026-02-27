@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft,
   Send,
   User,
   Calendar,
@@ -20,7 +19,6 @@ import type { CreatePersonDto, Gender } from '../../shared/models/personModel';
 const GENDER_OPTIONS: { value: Gender; label: string; icon: string }[] = [
   { value: 'male', label: 'Masculino', icon: '♂' },
   { value: 'female', label: 'Femenino', icon: '♀' },
-  { value: 'other', label: 'Otro', icon: '⚧' },
 ];
 
 export default function Extension() {
@@ -80,10 +78,10 @@ export default function Extension() {
         tree_id: treeId,
         name: form.name,
         gender: form.gender,
-        ...(form.born      && { born: form.born }),
-        ...(form.died      && { died: form.died }),
+        ...(form.born && { born: form.born }),
+        ...(form.died && { died: form.died }),
         ...(form.photo_url && { photo_url: form.photo_url }),
-        ...(form.bio       && { bio: form.bio }),
+        ...(form.bio && { bio: form.bio }),
         ...(form.father_id && { father_id: form.father_id }),
         ...(form.mother_id && { mother_id: form.mother_id }),
       };
@@ -120,14 +118,6 @@ export default function Extension() {
     <main className="min-h-screen bg-[#0a0c10] flex flex-col items-center justify-start py-10 px-4">
 
       <div className="w-full max-w-xl">
-
-        <button
-          onClick={() => navigate(`/tree-viewer/${treeId}`)}
-          className="flex items-center gap-2 text-white/40 hover:text-white/80 transition-colors text-sm mb-8"
-        >
-          <ArrowLeft size={16} />
-          Volver al árbol
-        </button>
 
         {/* Header */}
         <div className="mb-8">
@@ -243,9 +233,9 @@ export default function Extension() {
                     disabled={fatherOptions.length === 0}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-teal-400/60 transition-all appearance-none disabled:opacity-30"
                   >
-                    <option value="">— Sin padre registrado —</option>
+                    <option value="" className='bg-neutral-900'>— Sin padre registrado —</option>
                     {fatherOptions.map((p) => (
-                      <option key={p.id} value={p.id}>
+                      <option key={p.id} value={p.id} className='bg-neutral-900'>
                         {p.name}{p.born ? ` (n. ${p.born})` : ''}
                       </option>
                     ))}
@@ -263,9 +253,9 @@ export default function Extension() {
                     disabled={motherOptions.length === 0}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-teal-400/60 transition-all appearance-none disabled:opacity-30"
                   >
-                    <option value="">— Sin madre registrada —</option>
+                    <option value="" className='bg-neutral-900'>— Sin madre registrada —</option>
                     {motherOptions.map((p) => (
-                      <option key={p.id} value={p.id}>
+                      <option key={p.id} value={p.id} className='bg-neutral-900'>
                         {p.name}{p.born ? ` (n. ${p.born})` : ''}
                       </option>
                     ))}

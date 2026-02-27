@@ -41,7 +41,7 @@ import { usePersonsStore } from '../../shared/store/personsStore';
 import { usePartnersStore } from '../../shared/store/partnersStore';
 import { uploadImageByTree } from '../../shared/service/imageService';
 import type { Person, CreatePersonDto, UpdatePersonDto, Gender } from '../../shared/models/personModel';
-import { ExtensionQR } from '../../shared/components/extesion_qr';
+import { ExtensionQR } from '../../shared/components/ExtesionQr';
 
 
 type PersonNodeData = {
@@ -580,9 +580,9 @@ function Sidebar({
                       transition-all appearance-none
                     "
                   >
-                    <option value="">{label} — ninguno</option>
+                    <option value= "" className='bg-neutral-900'>{label} — ninguno</option>
                     {options.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
+                      <option className='bg-neutral-900' key={p.id} value={p.id}>{p.name}</option>
                     ))}
                   </select>
                 );
@@ -669,9 +669,9 @@ function Sidebar({
                           text-xs text-white focus:outline-none focus:border-teal-400/60 transition-all
                         "
                       >
-                        <option value="">Seleccionar...</option>
+                        <option value="" className='bg-neutral-900'>Seleccionar...</option>
                         {availableForPartner.map((p) => (
-                          <option key={p.id} value={p.id}>{p.name}</option>
+                          <option className='bg-neutral-900' key={p.id} value={p.id}>{p.name}</option>
                         ))}
                       </select>
                       <button

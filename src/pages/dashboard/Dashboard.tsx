@@ -26,7 +26,7 @@ export default function Dashboard() {
   };
 
   return (
-    <main className="min-h-screen bg-[#111318] text-white">
+    <main className="min-h-screen bg-[#0a0c10] text-white">
       <div className="max-w-6xl mx-auto p-6">
         
         <div className="flex justify-between items-center mb-12">
@@ -88,12 +88,6 @@ export default function Dashboard() {
               >
                 <Plus size={18} />
                 Nuevo árbol
-              </Link>
-              <Link
-                to="/extension"
-                className="flex items-center justify-center gap-2 px-4 py-2 border border-[#207d98] hover:border-[#2bacc8] text-[#2bacc8] font-medium rounded-lg transition-colors"
-              >
-                Solicitar acceso
               </Link>
             </div>
           </div>

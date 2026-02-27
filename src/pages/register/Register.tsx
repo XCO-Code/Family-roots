@@ -21,7 +21,7 @@ export default function Register() {
   };
 
   return (
-    <main className="min-h-screen bg-[#111318] flex items-center justify-center font-sans">
+    <main className="min-h-screen bg-[#0a0c10] flex items-center justify-center font-sans">
       <div className="w-full max-w-sm bg-[#1a1d24] border border-[#207d98]/20 rounded-2xl p-9">
 
         <div className="w-11 h-11 rounded-xl bg-[#07141d] border border-[#207d98]/30 flex items-center justify-center mb-7">
@@ -85,7 +85,7 @@ export default function Register() {
           </button>
 
           <p className="text-xs text-center text-[#207d98]">
-            ¿Ya tienes cuenta? <Link to="/login" className="text-[#2bacc8] hover:underline">Inicia sesión</Link>
+            ¿Ya tienes cuenta? <Link to="/" className="text-[#2bacc8] hover:underline">Inicia sesión</Link>
           </p>
 
         </form>
