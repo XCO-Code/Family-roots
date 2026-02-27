@@ -32,7 +32,7 @@ const routes = [
     element: <TreeEditor />, 
   },
   {
-    path: 'extend-family-tree/:treeId',
+    path: '/extend-family-tree/:treeId',
     element: <Extension />,
   },
 ];
