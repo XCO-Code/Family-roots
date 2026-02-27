@@ -10,4 +10,5 @@ export interface Tree {
 export interface TreeDto {
   name: string;
   description?: string;
+  user_id: string;
 }

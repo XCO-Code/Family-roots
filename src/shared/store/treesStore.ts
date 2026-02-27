@@ -10,18 +10,24 @@ interface TreesStore {
 
   getAllTrees: () => Promise<void>;
   getTreeById: (id: string) => Promise<void>;
+  getTreesByUserId: (id: string) => Promise<void>;
   createTree: (dto: TreeDto) => Promise<Tree>;
   updateTree: (id: string, dto: TreeDto) => Promise<Tree>;
   deleteTree: (id: string) => Promise<void>;
   setSelected: (tree: Tree | null) => void;
   clearError: () => void;
+  reset: () => void;
 }
 
-export const useTreesStore = create<TreesStore>((set) => ({
+const initialState = {
   trees: [],
   selectedTree: null,
   loading: false,
   error: null,
+};
+
+export const useTreesStore = create<TreesStore>((set) => ({
+  ...initialState,
 
   getAllTrees: async () => {
     set({ loading: true, error: null });
@@ -38,6 +44,16 @@ export const useTreesStore = create<TreesStore>((set) => ({
     try {
       const selectedTree = await treesService.getTreeById(id);
       set({ selectedTree, loading: false });
+    } catch (e) {
+      set({ error: (e as Error).message, loading: false });
+    }
+  },
+
+  getTreesByUserId: async (UserId) => {
+    set({ loading: true, error: null });
+    try {
+      const trees = await treesService.getTreesByUserId(UserId);
+      set({ trees, loading: false });
     } catch (e) {
       set({ error: (e as Error).message, loading: false });
     }
@@ -88,4 +104,6 @@ export const useTreesStore = create<TreesStore>((set) => ({
   setSelected: (tree) => set({ selectedTree: tree }),
 
   clearError: () => set({ error: null }),
+
+  reset: () => set(initialState),
 }));

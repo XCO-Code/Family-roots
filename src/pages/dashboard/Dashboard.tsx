@@ -9,19 +9,22 @@ export default function Dashboard() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const trees = useTreesStore((s) => s.trees);
-  const getAllTrees = useTreesStore((s) => s.getAllTrees);
+  const getTreesByUserId = useTreesStore((s) => s.getTreesByUserId);
+  const reset = useAuthStore((state) => state.reset)
 
   useEffect(() => {
     if (!user) {
       navigate('/');
     } else {
-      getAllTrees();
+      getTreesByUserId(user.id);
     }
-  }, [user, navigate, getAllTrees]);
+  }, [user, navigate, getTreesByUserId]);
 
   const handleLogout = () => {
     logout();
+    reset()
     navigate('/');
+
   };
 
   return (
@@ -68,7 +71,23 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-          {/* Trees list */}
+          <div className="bg-[#1a1d24] border border-white/5 rounded-2xl p-5 h-fit">
+            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-4">Acciones rápidas</h3>
+            <div className="flex flex-col gap-2">
+              <Link
+                to="/create-tree"
+                className="
+                  flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium
+                  bg-green-500/15 border border-green-500/25 text-green-300
+                  hover:bg-green-500/25 transition-all
+                "
+              >
+                <Plus size={15} />
+                Nuevo árbol
+              </Link>
+            </div>
+          </div>
+          
           <div className="lg:col-span-2">
             {trees.length === 0 ? (
               <div className="bg-[#1a1d24] border border-white/5 rounded-2xl p-10 sm:p-14 flex flex-col items-center justify-center text-center gap-5">
@@ -119,24 +138,6 @@ export default function Dashboard() {
                 ))}
               </div>
             )}
-          </div>
-
-          {/* Quick actions */}
-          <div className="bg-[#1a1d24] border border-white/5 rounded-2xl p-5 h-fit">
-            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-4">Acciones rápidas</h3>
-            <div className="flex flex-col gap-2">
-              <Link
-                to="/create-tree"
-                className="
-                  flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium
-                  bg-green-500/15 border border-green-500/25 text-green-300
-                  hover:bg-green-500/25 transition-all
-                "
-              >
-                <Plus size={15} />
-                Nuevo árbol
-              </Link>
-            </div>
           </div>
 
         </div>

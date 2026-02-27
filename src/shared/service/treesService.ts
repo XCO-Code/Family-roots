@@ -24,6 +24,16 @@ export const getTreeById = async (id: string): Promise<Tree> => {
   return data;
 };
 
+export const getTreesByUserId = async (userId: string): Promise<Tree[]> => {
+  const { data, error } = await supabase
+    .from('trees')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data;
+};
 
 export const createTree = async (dto: TreeDto): Promise<Tree> => {
   const { data, error } = await supabase

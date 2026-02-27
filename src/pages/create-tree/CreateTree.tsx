@@ -3,19 +3,21 @@ import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trees } from 'lucide-react';
 import { useTreesStore } from '../../shared/store/treesStore';
+import { useAuthStore } from '../../shared/store/authStore';
 
 export default function CreateTree() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
   const createTree = useTreesStore((s) => s.createTree);
+  const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     try {
-      const tree = await createTree({ name, description: description || undefined });
+      const tree = await createTree({ name, description: description || undefined, user_id: user?.id!});
       navigate(`/tree-editor/${tree.id}`);
     } catch (e) {
       setError((e as Error).message);

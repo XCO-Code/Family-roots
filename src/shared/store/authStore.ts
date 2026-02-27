@@ -13,13 +13,18 @@ interface AuthStore {
   getCurrentUser: () => Promise<void>;
   logout: () => void;
   clearError: () => void;
+  reset: () => void;
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
+const initialState = {
   user: null,
   access_token: null,
   loading: false,
   error: null,
+};
+
+export const useAuthStore = create<AuthStore>((set) => ({
+  ...initialState,
 
   register: async (dto) => {
     set({ loading: true, error: null });
@@ -56,4 +61,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   clearError: () => set({ error: null }),
+
+  reset: () => set(initialState),
 }));

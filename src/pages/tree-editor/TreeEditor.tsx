@@ -771,6 +771,7 @@ export default function TreeEditor() {
 
   const tree = useTreesStore((s) => s.selectedTree);
   const getTreeById = useTreesStore((s) => s.getTreeById);
+  const restTree = useTreesStore((s) => s.reset)
 
   const persons = usePersonsStore((s) => s.persons);
   const selectedPerson = usePersonsStore((s) => s.selectedPerson);
@@ -839,7 +840,12 @@ export default function TreeEditor() {
   };
 
   const handleOpenPresentation = () => {
-    window.open(`${window.location.origin}/tree-viewer/${treeId}`)
+    window.open(`${window.location.origin}/tree-viewer/${treeId}`);
+  }
+
+  const handleCloseTree = () => {
+    restTree();
+    navigate('/dashboard');
   }
 
   const handleDeletePerson = async (id: string) => {
@@ -882,7 +888,7 @@ export default function TreeEditor() {
       ">
         <div className="flex items-center gap-2 md:gap-4 min-w-0">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={handleCloseTree}
             className="
               flex items-center gap-2 text-white/40 hover:text-white/80
               transition-colors text-sm shrink-0
