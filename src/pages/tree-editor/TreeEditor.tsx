@@ -37,6 +37,7 @@ import {
 import { useTreesStore } from '../../shared/store/treesStore';
 import { usePersonsStore } from '../../shared/store/personsStore';
 import { usePartnersStore } from '../../shared/store/partnersStore';
+import { uploadImageByTree } from '../../shared/service/imageService';
 import type { Person, CreatePersonDto, UpdatePersonDto, Gender } from '../../shared/models/personModel';
 
 type PersonNodeData = {
@@ -277,7 +278,7 @@ interface SidebarProps {
   onSubmit: (data: CreatePersonDto | UpdatePersonDto) => Promise<void>;
   onDeletePerson: (id: string) => Promise<void>;
   onAddPartner: (partnerId: string) => Promise<void>;
-  onRemovePartner: (partnerRecordId: string) => Promise<void>;
+  onRemovePartner: (partnerRecordId: string, partnerId?: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -290,6 +291,21 @@ function Sidebar({
   const [newPartnerId, setNewPartnerId] = useState('');
   const [showPartners, setShowPartners] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !treeId) return;
+    setUploadLoading(true);
+    try {
+      const url = await uploadImageByTree(treeId, file);
+      setForm((f) => ({ ...f, photo_url: url }));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUploadLoading(false);
+    }
+  };
 
   // Sync form when selection or mode changes
   useEffect(() => {
@@ -322,12 +338,14 @@ function Sidebar({
     (pt) => selectedPerson && (pt.person_id === selectedPerson.id || pt.partner_id === selectedPerson.id),
   );
 
+  const partnerIds = new Set(
+    personPartners.map((pt) =>
+      pt.person_id === selectedPerson?.id ? pt.partner_id : pt.person_id,
+    ),
+  );
+
   const availableForPartner = persons.filter(
-    (p) =>
-      p.id !== selectedPerson?.id &&
-      !personPartners.some(
-        (pt) => pt.person_id === p.id || pt.partner_id === p.id,
-      ),
+    (p) => p.id !== selectedPerson?.id && !partnerIds.has(p.id),
   );
 
   // ── Campo genérico ─────────────────────────────────────────────────────────
@@ -409,7 +427,7 @@ function Sidebar({
       <div className="flex-1 overflow-y-auto scrollbar-thin">
         <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
 
-          {/* Avatar preview + photo url */}
+          {/* Avatar + subir foto */}
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 rounded-xl bg-white/5 border border-white/10 shrink-0 overflow-hidden flex items-center justify-center">
               {form.photo_url ? (
@@ -418,7 +436,48 @@ function Sidebar({
                 <User size={22} className="text-white/20" />
               )}
             </div>
-            <Field label="Foto (URL)" field="photo_url" placeholder="https://..." />
+            <div className="flex flex-col gap-1 flex-1 min-w-0">
+              <label className="text-xs font-medium text-white/40 uppercase tracking-widest">Foto</label>
+              <label className={`
+                flex items-center justify-center gap-2 px-3 py-2 rounded-xl cursor-pointer
+                border border-white/10 text-xs transition-all
+                ${uploadLoading
+                  ? 'bg-white/5 text-white/30 pointer-events-none'
+                  : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/80'
+                }
+              `}>
+                {uploadLoading ? (
+                  <>
+                    <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Subiendo...
+                  </>
+                ) : (
+                  <>
+                    <User size={12} />
+                    {form.photo_url ? 'Cambiar foto' : 'Subir foto'}
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  disabled={uploadLoading}
+                />
+              </label>
+              {form.photo_url && (
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, photo_url: '' }))}
+                  className="text-xs text-red-400/50 hover:text-red-400 transition-colors text-left"
+                >
+                  Quitar foto
+                </button>
+              )}
+            </div>
           </div>
 
           <Field label="Nombre completo *" field="name" placeholder="Ej: María García" />
@@ -554,7 +613,12 @@ function Sidebar({
                             </span>
                           </div>
                           <button
-                            onClick={() => onRemovePartner(pt.id)}
+                            onClick={() => {
+                              const otherId = pt.person_id === selectedPerson.id
+                                ? pt.partner_id
+                                : pt.person_id;
+                              onRemovePartner(pt.id, otherId);
+                            }}
                             className="text-white/20 hover:text-red-400 transition-colors shrink-0 ml-2"
                           >
                             <HeartOff size={13} />
@@ -686,9 +750,11 @@ export default function TreeEditor() {
     getAllPersons(treeId);
   }, [treeId]);
 
+  const personIdsKey = persons.map((p) => p.id).join(',');
   useEffect(() => {
+    if (persons.length === 0) return;
     persons.forEach((p) => getAllPartners(p.id));
-  }, [persons.length]);
+  }, [personIdsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSelectNode = useCallback((person: Person) => {
     setSelectedPerson(person);
@@ -703,9 +769,8 @@ export default function TreeEditor() {
     );
     setNodes(n);
     setEdges(e);
-  }, [persons, selectedPerson?.id, handleSelectNode]);
+  }, [persons, partners, selectedPerson?.id, handleSelectNode]);
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
   const handleConnect = useCallback(
     (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
     [setEdges],
@@ -731,12 +796,16 @@ export default function TreeEditor() {
   const handleAddPartner = async (partnerId: string) => {
     if (!selectedPerson) return;
     await createPartner({ person_id: selectedPerson.id, partner_id: partnerId });
-    await getAllPartners(selectedPerson.id);
+    await Promise.all([
+      getAllPartners(selectedPerson.id),
+      getAllPartners(partnerId),
+    ]);
   };
 
-  const handleRemovePartner = async (partnerRecordId: string) => {
+  const handleRemovePartner = async (partnerRecordId: string, partnerId?: string) => {
     await deletePartner(partnerRecordId);
     if (selectedPerson) await getAllPartners(selectedPerson.id);
+    if (partnerId) await getAllPartners(partnerId);
   };
 
   const openCreate = () => {

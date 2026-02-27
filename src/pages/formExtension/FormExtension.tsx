@@ -14,12 +14,13 @@ import {
 } from 'lucide-react';
 
 import { usePersonsStore } from '../../shared/store/personsStore';
+import { uploadImageByTree } from '../../shared/service/imageService';
 import type { CreatePersonDto, Gender } from '../../shared/models/personModel';
 
 const GENDER_OPTIONS: { value: Gender; label: string; icon: string }[] = [
-  { value: 'male',   label: 'Masculino', icon: '♂' },
-  { value: 'female', label: 'Femenino',  icon: '♀' },
-  { value: 'other',  label: 'Otro',      icon: '⚧' },
+  { value: 'male', label: 'Masculino', icon: '♂' },
+  { value: 'female', label: 'Femenino', icon: '♀' },
+  { value: 'other', label: 'Otro', icon: '⚧' },
 ];
 
 export default function Extension() {
@@ -44,6 +45,21 @@ export default function Extension() {
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  const [uploadLoading, setUploadLoading] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !treeId) return;
+    setUploadLoading(true);
+    try {
+      const url = await uploadImageByTree(treeId, file);
+      setForm((f) => ({ ...f, photo_url: url }));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUploadLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (treeId) getAllPersons(treeId);
@@ -262,9 +278,8 @@ export default function Extension() {
           {/* ── Sección: Info adicional ──────────────────────────────────────── */}
           <Section icon={<FileText size={14} />} title="Información adicional">
 
-            <Field label="URL de foto">
-              <div className="flex gap-3 items-start">
-                {/* Preview */}
+            <Field label="Foto">
+              <div className="flex gap-3 items-center">
                 <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 shrink-0 overflow-hidden flex items-center justify-center">
                   {form.photo_url ? (
                     <img
@@ -277,13 +292,47 @@ export default function Extension() {
                     <ImageIcon size={16} className="text-white/20" />
                   )}
                 </div>
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={form.photo_url ?? ''}
-                  onChange={set('photo_url')}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-teal-400/60 transition-all"
-                />
+                <div className="flex flex-col gap-1 flex-1 min-w-0">
+                  <label className={`
+                    flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl cursor-pointer
+                    border border-white/10 text-sm transition-all
+                    ${uploadLoading
+                      ? 'bg-white/5 text-white/30 pointer-events-none'
+                      : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/80'
+                    }
+                  `}>
+                    {uploadLoading ? (
+                      <>
+                        <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                        </svg>
+                        Subiendo...
+                      </>
+                    ) : (
+                      <>
+                        <ImageIcon size={14} />
+                        {form.photo_url ? 'Cambiar foto' : 'Subir foto'}
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileChange}
+                      disabled={uploadLoading}
+                    />
+                  </label>
+                  {form.photo_url && (
+                    <button
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, photo_url: '' }))}
+                      className="text-xs text-red-400/50 hover:text-red-400 transition-colors text-left"
+                    >
+                      Quitar foto
+                    </button>
+                  )}
+                </div>
               </div>
             </Field>
 
@@ -299,7 +348,6 @@ export default function Extension() {
 
           </Section>
 
-          {/* ── Submit ──────────────────────────────────────────────────────── */}
           <button
             type="submit"
             disabled={status === 'loading' || !form.name.trim()}
