@@ -63,8 +63,8 @@ export default function Extension() {
     if (treeId) getAllPersons(treeId);
   }, [treeId]);
 
-  const fatherOptions = persons.filter((p) => p.gender === 'male' || p.gender === 'other');
-  const motherOptions = persons.filter((p) => p.gender === 'female' || p.gender === 'other');
+  const fatherOptions = persons.filter((p) => p.gender === 'male');
+  const motherOptions = persons.filter((p) => p.gender === 'female');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,8 +104,8 @@ export default function Extension() {
     return (
       <main className="min-h-screen bg-[#0a0c10] flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-4 text-center">
-          <div className="w-20 h-20 rounded-full bg-teal-500/15 border border-teal-500/30 flex items-center justify-center">
-            <CheckCircle2 size={36} className="text-teal-400" />
+          <div className="w-20 h-20 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center">
+            <CheckCircle2 size={36} className="text-green-400" />
           </div>
           <h2 className="text-white font-semibold text-lg">¡Persona creada!</h2>
           <p className="text-white/40 text-sm">Redirigiendo al árbol...</p>
@@ -127,7 +127,7 @@ export default function Extension() {
           </p>
           {treeId && (
             <div className="mt-3 inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-teal-400" />
+              <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
               <span className="text-white/40 text-xs font-mono">{treeId}</span>
             </div>
           )}
@@ -155,7 +155,7 @@ export default function Extension() {
                 value={form.name}
                 onChange={set('name')}
                 required
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-teal-400/60 focus:bg-white/8 transition-all"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-purple-500/50 focus:bg-white/8 transition-all"
               />
             </Field>
 
@@ -195,7 +195,7 @@ export default function Extension() {
                   type="date"
                   value={form.born ?? ''}
                   onChange={set('born')}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-teal-400/60 transition-all"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-all"
                 />
               </Field>
               <Field label="Fecha de fallecimiento">
@@ -203,7 +203,7 @@ export default function Extension() {
                   type="date"
                   value={form.died ?? ''}
                   onChange={set('died')}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-teal-400/60 transition-all"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-all"
                 />
               </Field>
             </div>
@@ -231,7 +231,7 @@ export default function Extension() {
                     value={form.father_id ?? ''}
                     onChange={set('father_id')}
                     disabled={fatherOptions.length === 0}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-teal-400/60 transition-all appearance-none disabled:opacity-30"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-all appearance-none disabled:opacity-30"
                   >
                     <option value="" className='bg-neutral-900'>— Sin padre registrado —</option>
                     {fatherOptions.map((p) => (
@@ -251,7 +251,7 @@ export default function Extension() {
                     value={form.mother_id ?? ''}
                     onChange={set('mother_id')}
                     disabled={motherOptions.length === 0}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-teal-400/60 transition-all appearance-none disabled:opacity-30"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-all appearance-none disabled:opacity-30"
                   >
                     <option value="" className='bg-neutral-900'>— Sin madre registrada —</option>
                     {motherOptions.map((p) => (
@@ -332,7 +332,7 @@ export default function Extension() {
                 placeholder="Breve descripción, anécdotas, lugar de origen..."
                 value={form.bio ?? ''}
                 onChange={set('bio')}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-teal-400/60 transition-all resize-none"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-purple-500/50 transition-all resize-none"
               />
             </Field>
 
@@ -344,8 +344,8 @@ export default function Extension() {
             className="
               w-full flex items-center justify-center gap-2
               py-3 rounded-xl font-semibold text-sm
-              bg-teal-500/20 border border-teal-500/35 text-teal-300
-              hover:bg-teal-500/30 transition-all
+              bg-green-500/20 border border-green-500/35 text-green-300
+              hover:bg-green-500/30 transition-all
               disabled:opacity-40 disabled:cursor-not-allowed
             "
           >

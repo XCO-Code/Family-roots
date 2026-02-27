@@ -41,26 +41,26 @@ export default function TreeViewer() {
     // cast results to RFNode/RFEdge generics
     setNodes(n as RFNode[]);
     setEdges(e as RFEdge[]);
-    setNodes(n);
-    setEdges(e);
   }, [persons, navigate, treeId, setSelectedPerson]);
 
   const onConnect = (connection: Connection) => setEdges((eds) => addEdge(connection, eds));
 
   return (
     <div className="w-full h-screen bg-[#111318] flex flex-col">
-      <div className="bg-[#1a1d24] border-b border-[#207d98]/20 p-4">
+      <div className="bg-[#1a1d24] border-b border-white/5 p-3 md:p-4">
 
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-[#2bacc8] mt-3">{tree?.name || 'Árbol genealógico'}</h2>
-          <div className="flex gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg md:text-2xl font-bold text-white mt-1 md:mt-3 truncate min-w-0">
+            {tree?.name || 'Árbol genealógico'}
+          </h2>
+          <div className="flex gap-2 shrink-0">
             {treeId && (
               <button
                 onClick={() => setShowQRModal(true)}
-                className="px-3 py-1 bg-[#2bacc8] hover:bg-[#207d98] text-[#111318] rounded transition-colors text-sm flex items-center gap-2"
+                className="px-3 py-1.5 bg-green-500/20 border border-green-500/30 text-green-300 hover:bg-green-500/30 rounded-xl transition-all text-sm flex items-center gap-2"
               >
                 <Share2 size={16} />
-                Extender
+                <span className="hidden sm:inline">Extender</span>
               </button>
             )}
           </div>

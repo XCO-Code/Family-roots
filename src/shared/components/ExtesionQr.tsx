@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import QRCode from 'react-qr-code';
-import { Copy, X } from 'lucide-react';
+import { Copy, Check, X } from 'lucide-react';
 
 interface ExtensionQRProps {
   treeId: string;
@@ -23,50 +23,58 @@ export function ExtensionQR({ treeId, onClose }: ExtensionQRProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-      <div className="bg-[#14161a] rounded-lg shadow-xl p-8 max-w-sm w-full mx-4">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-[#1a1d24] border border-white/8 rounded-2xl shadow-2xl p-6 max-w-sm w-full">
 
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Compartir Árbol Familiar</h2>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h2 className="text-base font-semibold text-white">Compartir árbol</h2>
+            <p className="text-xs text-white/35 mt-0.5">Escanea el QR o copia el enlace</p>
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
             aria-label="Cerrar"
           >
-            <X size={24} />
+            <X size={14} className="text-white/50" />
           </button>
         </div>
 
-        <div className="flex justify-center mb-8 bg-gray-50 p-6 rounded-lg">
+        {/* QR Code */}
+        <div className="flex justify-center mb-5 bg-white rounded-xl p-5">
           <QRCode
             value={treeUrl}
-            size={256}
+            size={200}
             level="H"
           />
         </div>
 
-        <div className="space-y-3">
-          <label htmlFor="tree-url" className="block text-sm font-medium text-white">
-            Enlace del árbol:
+        {/* URL + Copy */}
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-medium text-white/40 uppercase tracking-widest">
+            Enlace
           </label>
           <div className="flex gap-2">
             <input
               ref={inputRef}
-              id="tree-url"
               type="text"
               value={treeUrl}
               readOnly
-              className="flex-1 px-4 py-2 border border-gray-800 rounded-lg bg-[#111419] text-sm text-gray-300 font-mono"
+              className="flex-1 px-3 py-2 rounded-xl bg-[#111318] border border-white/8 text-xs text-white/50 font-mono focus:outline-none min-w-0"
             />
             <button
               onClick={handleCopy}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                copied
-                  ? 'bg-green-500 text-white'
-                  : 'bg-blue-500 text-white hover:bg-blue-600'
-              }`}
+              className={`
+                px-3 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 shrink-0 transition-all border
+                ${copied
+                  ? 'bg-green-500/20 border-green-500/30 text-green-300'
+                  : 'bg-purple-500/20 border-purple-500/30 text-purple-300 hover:bg-purple-500/30'
+                }
+              `}
             >
-              <Copy size={18} />
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+              {copied ? 'Copiado' : 'Copiar'}
             </button>
           </div>
         </div>

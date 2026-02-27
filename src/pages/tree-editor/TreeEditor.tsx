@@ -57,14 +57,14 @@ function PersonNode({ data }: NodeProps) {
 
   const generationColors: Record<number, string> = {
     0: 'from-amber-500/20 to-amber-600/10 border-amber-500/40',
-    1: 'from-teal-500/20 to-teal-600/10 border-teal-500/40',
+    1: 'from-purple-500/20 to-purple-600/10 border-purple-500/40',
     2: 'from-sky-500/20 to-sky-600/10 border-sky-500/40',
     3: 'from-violet-500/20 to-violet-600/10 border-violet-500/40',
     4: 'from-rose-500/20 to-rose-600/10 border-rose-500/40',
   };
   const accentColors: Record<number, string> = {
     0: 'bg-amber-500',
-    1: 'bg-teal-500',
+    1: 'bg-purple-500',
     2: 'bg-sky-500',
     3: 'bg-violet-500',
     4: 'bg-rose-500',
@@ -89,7 +89,7 @@ function PersonNode({ data }: NodeProps) {
       style={{ boxShadow: isSelected ? '0 0 30px rgba(255,255,255,0.08)' : undefined }}
     >
       {/* Accent bar top */}
-      <div className={`${accentClass} h-1 w-full rounded-t-2xl`} />
+      <div className={`${accentClass} h-1 w-full`} />
 
       {/* Handles */}
       <Handle 
@@ -136,7 +136,7 @@ function PersonNode({ data }: NodeProps) {
               {person.name}
             </p>
             <p className="text-white/40 text-xs mt-0.5">
-              {isMale ? '♂ Hombre' : isFemale ? '♀ Mujer' : '⚧ Otro'}
+              {isMale ? '♂ Hombre' : '♀ Mujer'}
             </p>
           </div>
         </div>
@@ -397,7 +397,7 @@ function Sidebar({
         className="
           bg-white/5 border border-white/10 rounded-xl px-3 py-2
           text-sm text-white placeholder-white/20
-          focus:outline-none focus:border-teal-400/60 focus:bg-white/8
+          focus:outline-none focus:border-purple-500/50 focus:bg-white/8
           transition-all duration-150
         "
       />
@@ -406,52 +406,72 @@ function Sidebar({
 
   if (mode === 'idle') {
     return (
-      <aside className="w-72 bg-[#0f1117] border-l border-white/5 flex flex-col">
-        <div className="p-5 flex-1 flex flex-col items-center justify-center text-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
-            <UserCircle size={32} className="text-white/20" />
+      <>
+        {/* Desktop sidebar */}
+        <aside className="hidden md:flex w-72 bg-[#0f1117] border-r border-white/5 flex-col">
+          <div className="p-5 flex-1 flex flex-col items-center justify-center text-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
+              <UserCircle size={32} className="text-white/20" />
+            </div>
+            <div>
+              <p className="text-white/50 text-sm">Selecciona una persona</p>
+              <p className="text-white/25 text-xs mt-1">o crea una nueva para empezar</p>
+            </div>
+            <button
+              onClick={onCreateOpen}
+              className="
+                flex items-center gap-2 px-4 py-2 rounded-xl
+                bg-green-500/20 border border-green-500/30 text-green-300
+                hover:bg-green-500/30 transition-all text-sm font-medium
+              "
+            >
+              <Plus size={15} />
+              Nueva persona
+            </button>
           </div>
-          <div>
-            <p className="text-white/50 text-sm">Selecciona una persona</p>
-            <p className="text-white/25 text-xs mt-1">o crea una nueva para empezar</p>
-          </div>
-          <button
-            onClick={onCreateOpen}
-            className="
-              flex items-center gap-2 px-4 py-2 rounded-xl
-              bg-teal-500/20 border border-teal-500/30 text-teal-300
-              hover:bg-teal-500/30 transition-all text-sm font-medium
-            "
-          >
-            <Plus size={15} />
-            Nueva persona
-          </button>
-        </div>
-      </aside>
+        </aside>
+        {/* Mobile: no panel shown in idle, canvas is full screen */}
+      </>
     );
   }
 
   return (
-    <aside className="w-72 bg-[#0f1117] border-l border-white/5 flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between shrink-0">
-        <div>
-          <h3 className="text-sm font-semibold text-white">
-            {mode === 'create' ? 'Nueva persona' : 'Editar persona'}
-          </h3>
-          {mode === 'edit' && selectedPerson && (
-            <p className="text-xs text-white/30 mt-0.5 truncate max-w-45">
-              {selectedPerson.name}
-            </p>
-          )}
+    <>
+      <div
+        className="md:hidden fixed inset-0 bg-black/50 z-20 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      <aside className="
+        md:w-72 md:relative md:flex md:flex-col md:bg-[#0f1117] md:border-r md:border-white/5 md:overflow-hidden
+        fixed bottom-0 left-0 right-0 z-30 md:z-auto
+        bg-[#0f1117] border-t border-white/10
+        flex flex-col
+        max-h-[80vh] md:max-h-none
+      ">
+        <div className="md:hidden flex justify-center pt-3 pb-1 shrink-0">
+          <div className="w-10 h-1 rounded-full bg-white/20" />
         </div>
-        <button
-          onClick={onClose}
-          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
-        >
-          <X size={14} className="text-white/50" />
-        </button>
-      </div>
+
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between shrink-0">
+          <div>
+            <h3 className="text-sm font-semibold text-white">
+              {mode === 'create' ? 'Nueva persona' : 'Editar persona'}
+            </h3>
+            {mode === 'edit' && selectedPerson && (
+              <p className="text-xs text-white/30 mt-0.5 truncate max-w-45">
+                {selectedPerson.name}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+          >
+            <X size={14} className="text-white/50" />
+          </button>
+        </div>
 
       {/* Form */}
       <div className="flex-1 overflow-y-auto scrollbar-thin">
@@ -515,7 +535,7 @@ function Sidebar({
           {/* Gender selector */}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-white/40 uppercase tracking-widest">Género</label>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-2 gap-1.5">
               {(['male', 'female', 'other'] as Gender[]).map((g) => (
                 <button
                   key={g}
@@ -525,8 +545,7 @@ function Sidebar({
                     py-2 rounded-xl text-xs font-medium transition-all border
                     ${form.gender === g
                       ? g === 'male'   ? 'bg-sky-500/25  border-sky-400/50  text-sky-300'
-                      : g === 'female' ? 'bg-rose-500/25 border-rose-400/50 text-rose-300'
-                      :                  'bg-slate-500/25 border-slate-400/50 text-slate-300'
+                      : 'bg-rose-500/25 border-rose-400/50 text-rose-300'
                       : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/8'
                     }
                   `}
@@ -554,7 +573,7 @@ function Sidebar({
               className="
                 bg-white/5 border border-white/10 rounded-xl px-3 py-2
                 text-sm text-white placeholder-white/20 resize-none
-                focus:outline-none focus:border-teal-400/60 transition-all
+                focus:outline-none focus:border-purple-500/50 transition-all
               "
             />
           </div>
@@ -576,7 +595,7 @@ function Sidebar({
                     onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value || undefined }))}
                     className="
                       bg-white/5 border border-white/10 rounded-xl px-3 py-2
-                      text-sm text-white focus:outline-none focus:border-teal-400/60
+                      text-sm text-white focus:outline-none focus:border-purple-500/50
                       transition-all appearance-none
                     "
                   >
@@ -596,8 +615,8 @@ function Sidebar({
             disabled={loading || !form.name?.trim()}
             className="
               flex items-center justify-center gap-2
-              bg-teal-500/20 border border-teal-500/40 text-teal-300
-              hover:bg-teal-500/30 disabled:opacity-40 disabled:cursor-not-allowed
+              bg-green-500/20 border border-green-500/40 text-green-300
+              hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed
               rounded-xl py-2.5 text-sm font-semibold transition-all
             "
           >
@@ -666,7 +685,7 @@ function Sidebar({
                         onChange={(e) => setNewPartnerId(e.target.value)}
                         className="
                           flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2
-                          text-xs text-white focus:outline-none focus:border-teal-400/60 transition-all
+                          text-xs text-white focus:outline-none focus:border-purple-500/50 transition-all
                         "
                       >
                         <option value="" className='bg-neutral-900'>Seleccionar...</option>
@@ -739,6 +758,7 @@ function Sidebar({
         )}
       </div>
     </aside>
+    </>
   );
 }
 
@@ -858,78 +878,93 @@ export default function TreeEditor() {
 
       <nav className="
         h-14 shrink-0 flex items-center justify-between
-        px-5 bg-[#0f1117] border-b border-white/5
+        px-3 md:px-5 bg-[#0f1117] border-b border-white/5
       ">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4 min-w-0">
           <button
             onClick={() => navigate('/dashboard')}
             className="
               flex items-center gap-2 text-white/40 hover:text-white/80
-              transition-colors text-sm
+              transition-colors text-sm shrink-0
             "
           >
             <ArrowLeft size={16} />
-            Dashboard
+            <span className="hidden sm:inline">Dashboard</span>
           </button>
-          <div className="w-px h-4 bg-white/10" />
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-teal-400" />
-            <h1 className="text-white font-semibold text-sm">
+          <div className="w-px h-4 bg-white/10 shrink-0" />
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
+            <h1 className="text-white font-semibold text-sm truncate max-w-[120px] sm:max-w-xs">
               {tree?.name ?? 'Cargando...'}
             </h1>
             {tree?.description && (
-              <span className="text-white/30 text-xs hidden md:block">
+              <span className="text-white/30 text-xs hidden md:block truncate">
                 — {tree.description}
               </span>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-white/25 text-xs">
+        <div className="flex items-center gap-1.5 md:gap-3 shrink-0">
+          <span className="text-white/25 text-xs hidden sm:inline">
             {persons.length} {persons.length === 1 ? 'persona' : 'personas'}
           </span>
           <button
             onClick={openCreate}
             className="
-              flex items-center gap-2 px-3 py-1.5 rounded-xl
-              bg-teal-500/15 border border-teal-500/25 text-teal-300
-              hover:bg-teal-500/25 transition-all text-xs font-medium
+              flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 rounded-xl
+              bg-green-500/15 border border-green-500/25 text-green-300
+              hover:bg-green-500/25 transition-all text-xs font-medium
             "
           >
             <Plus size={13} />
-            Agregar
+            <span className="hidden sm:inline">Agregar</span>
           </button>
           
           <button
             onClick={() => setShowQRModal(true)}
             className="
-              flex items-center gap-2 px-3 py-1.5 rounded-xl
-              bg-teal-500/15 border border-teal-500/25 text-teal-300
-              hover:bg-teal-500/25 transition-all text-xs font-medium
+              flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 rounded-xl
+              bg-green-500/15 border border-green-500/25 text-green-300
+              hover:bg-green-500/25 transition-all text-xs font-medium
             "
           >
-            <Share2 size={16} />
-            extender
+            <Share2 size={14} />
+            <span className="hidden sm:inline">Extender</span>
           </button>
           <button
             onClick={handleOpenPresentation}
             className="
-              flex items-center gap-2 px-3 py-1.5 rounded-xl
-              bg-teal-500/15 border border-teal-500/25 text-teal-300
-              hover:bg-teal-500/25 transition-all text-xs font-medium
+              flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 rounded-xl
+              bg-green-500/15 border border-green-500/25 text-green-300
+              hover:bg-green-500/25 transition-all text-xs font-medium
             "
           >
             <Presentation size={13} />
-            Modo presentacion
+            <span className="hidden md:inline">Modo presentacion</span>
           </button>
-
         </div>
         
       </nav>
 
       {/* ── Main ────────────────────────────────────────────────────────────── */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
+
+        {/* Sidebar — desktop: left panel | mobile: bottom sheet */}
+        <Sidebar
+          mode={sidebarMode}
+          persons={persons}
+          partners={partners}
+          selectedPerson={selectedPerson}
+          treeId={treeId ?? ''}
+          onClose={closeSidebar}
+          onCreateOpen={openCreate}
+          onSubmit={handleFormSubmit}
+          onDeletePerson={handleDeletePerson}
+          onAddPartner={handleAddPartner}
+          onRemovePartner={handleRemovePartner}
+          loading={personsLoading}
+        />
 
         {/* React Flow canvas */}
         <div className="flex-1 relative">
@@ -946,8 +981,8 @@ export default function TreeEditor() {
                 onClick={openCreate}
                 className="
                   flex items-center gap-2 px-5 py-2.5 rounded-xl
-                  bg-teal-500/20 border border-teal-500/30 text-teal-300
-                  hover:bg-teal-500/30 transition-all text-sm font-medium
+                  bg-green-500/20 border border-green-500/30 text-green-300
+                  hover:bg-green-500/30 transition-all text-sm font-medium
                 "
               >
                 <Plus size={15} />
@@ -984,12 +1019,13 @@ export default function TreeEditor() {
                 }}
               />
               <MiniMap
+                className="hidden md:block"
                 style={{
                   background: 'rgba(15,17,23,0.9)',
                   border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: '12px',
                 }}
-                nodeColor={() => 'rgba(45,212,191,0.4)'}
+                nodeColor={() => 'rgba(168,85,247,0.4)'}
                 maskColor="rgba(0,0,0,0.4)"
               />
 
@@ -997,21 +1033,6 @@ export default function TreeEditor() {
           )}
         </div>
 
-        {/* Sidebar */}
-        <Sidebar
-          mode={sidebarMode}
-          persons={persons}
-          partners={partners}
-          selectedPerson={selectedPerson}
-          treeId={treeId ?? ''}
-          onClose={closeSidebar}
-          onCreateOpen={openCreate}
-          onSubmit={handleFormSubmit}
-          onDeletePerson={handleDeletePerson}
-          onAddPartner={handleAddPartner}
-          onRemovePartner={handleRemovePartner}
-          loading={personsLoading}
-        />
       </div>
       {showQRModal && treeId && (
               <ExtensionQR treeId={treeId} onClose={() => setShowQRModal(false)} />
