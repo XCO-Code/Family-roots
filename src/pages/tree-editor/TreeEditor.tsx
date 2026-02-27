@@ -32,6 +32,8 @@ import {
   ChevronUp,
   Calendar,
   UserCircle,
+  Share2,
+  Presentation
 } from 'lucide-react';
 
 import { useTreesStore } from '../../shared/store/treesStore';
@@ -39,6 +41,8 @@ import { usePersonsStore } from '../../shared/store/personsStore';
 import { usePartnersStore } from '../../shared/store/partnersStore';
 import { uploadImageByTree } from '../../shared/service/imageService';
 import type { Person, CreatePersonDto, UpdatePersonDto, Gender } from '../../shared/models/personModel';
+import { ExtensionQR } from '../../shared/components/extesion_qr';
+
 
 type PersonNodeData = {
   person: Person;
@@ -88,8 +92,25 @@ function PersonNode({ data }: NodeProps) {
       <div className={`${accentClass} h-1 w-full rounded-t-2xl`} />
 
       {/* Handles */}
-      <Handle type="target" position={Position.Top} style={{ background: 'transparent', border: 'none', top: -2 }} />
-      <Handle type="source" position={Position.Bottom} style={{ background: 'transparent', border: 'none', bottom: -2 }} />
+      <Handle 
+        type="target" 
+        position={Position.Top} 
+        id="father" 
+        style={{ left: '25%', background: 'transparent', border: 'none' }} 
+      />
+      <Handle 
+        type="target" 
+        position={Position.Top} 
+        id="mother" 
+        style={{ left: '75%', background: 'transparent', border: 'none' }} 
+      />
+
+      {/* SALIDA (Bottom): Un solo punto para sus hijos */}
+      <Handle 
+        type="source" 
+        position={Position.Bottom} 
+        style={{ background: 'transparent', border: 'none', bottom: -2 }} 
+      />
 
       <div className="p-3">
         {/* Avatar */}
@@ -145,44 +166,43 @@ function buildGraphElements(
   selectedId: string | null,
   onSelect: (p: Person) => void,
 ): { nodes: Node[]; edges: Edge[] } {
-
   if (persons.length === 0) return { nodes: [], edges: [] };
 
   const personIds = new Set(persons.map((p) => p.id));
-
-  const canonicalParent = new Map<string, string>(); // childId → parentId
-  const childrenOf      = new Map<string, string[]>(); // parentId → [childId]
+  
+  // 1. Definir jerarquía para el layout (usamos un padre principal para posicionar)
+  const layoutParent = new Map<string, string>(); 
+  const childrenOf = new Map<string, string[]>();
 
   persons.forEach((p) => {
-    const pid = p.father_id && personIds.has(p.father_id)
+    const mainParentId = p.father_id && personIds.has(p.father_id)
       ? p.father_id
       : p.mother_id && personIds.has(p.mother_id)
       ? p.mother_id
       : null;
 
-    if (!pid) return;
-    canonicalParent.set(p.id, pid);
-    childrenOf.set(pid, [...(childrenOf.get(pid) ?? []), p.id]);
+    if (mainParentId) {
+      layoutParent.set(p.id, mainParentId);
+      childrenOf.set(mainParentId, [...(childrenOf.get(mainParentId) ?? []), p.id]);
+    }
   });
 
-  // ── 2. Calcular generación por BFS desde raíces ────────────────────────────
+  // 2. Calcular generaciones (BFS)
   const generationMap = new Map<string, number>();
-  const roots = persons.filter((p) => !canonicalParent.has(p.id));
-
+  const roots = persons.filter((p) => !layoutParent.has(p.id));
   const queue: Array<{ id: string; gen: number }> = roots.map((r) => ({ id: r.id, gen: 0 }));
+  
   while (queue.length) {
     const { id, gen } = queue.shift()!;
     if (generationMap.has(id)) continue;
     generationMap.set(id, gen);
     (childrenOf.get(id) ?? []).forEach((cid) => queue.push({ id: cid, gen: gen + 1 }));
   }
-  // nodos no alcanzados (ciclos o desconectados) → generación 0
   persons.forEach((p) => { if (!generationMap.has(p.id)) generationMap.set(p.id, 0); });
 
-  // Calcular el "ancho de subárbol" de cada nodo (bottom-up)
+  // 3. Calcular anchos de subárbol (Bottom-up)
   const subtreeWidth = new Map<string, number>();
-
-  const maxGen = Math.max(...Array.from(generationMap.values()));
+  const maxGen = Math.max(...Array.from(generationMap.values()), 0);
 
   for (let g = maxGen; g >= 0; g--) {
     persons
@@ -198,14 +218,14 @@ function buildGraphElements(
       });
   }
 
-  // Asignar posición X recursivamente (top-down)
+  // 4. Asignar posiciones X e Y
   const positionMap = new Map<string, { x: number; y: number }>();
 
   function assignX(id: string, leftBound: number): void {
-    const gen   = generationMap.get(id) ?? 0;
+    const gen = generationMap.get(id) ?? 0;
     const width = subtreeWidth.get(id) ?? NODE_W;
-    const x     = leftBound + width / 2 - NODE_W / 2; // centrado dentro del ancho
-    const y     = gen * NODE_H;
+    const x = leftBound + width / 2 - NODE_W / 2;
+    const y = gen * NODE_H;
     positionMap.set(id, { x, y });
 
     const kids = childrenOf.get(id) ?? [];
@@ -217,23 +237,14 @@ function buildGraphElements(
     });
   }
 
-  // Procesar cada árbol raíz, uno a la derecha del otro con separación extra
-  const ROOT_GAP = NODE_W * 0.5; // espacio extra entre árboles distintos
   let rootCursor = 0;
+  const ROOT_GAP = NODE_W * 0.5;
   roots.forEach((r) => {
     assignX(r.id, rootCursor);
     rootCursor += (subtreeWidth.get(r.id) ?? NODE_W) + ROOT_GAP;
   });
 
-  // Nodos huérfanos no alcanzados
-  persons.forEach((p) => {
-    if (!positionMap.has(p.id)) {
-      positionMap.set(p.id, { x: rootCursor, y: 0 });
-      rootCursor += NODE_W;
-    }
-  });
-
-  // ── 5. Construir nodos React Flow ──────────────────────────────────────────
+  // 5. Crear Nodos
   const nodes: Node[] = persons.map((p) => {
     const pos = positionMap.get(p.id) ?? { x: 0, y: 0 };
     return {
@@ -249,16 +260,33 @@ function buildGraphElements(
     };
   });
 
-  // Construir edges
+  // 6. Crear Edges DOBLES (Padre y Madre)
   const edges: Edge[] = [];
-  canonicalParent.forEach((parentId, childId) => {
-    edges.push({
-      id: `e-${parentId}-${childId}`,
-      source: parentId,
-      target: childId,
-      type: 'smoothstep',
-      style: { stroke: 'rgba(255,255,255,0.20)', strokeWidth: 1.5 },
-    });
+  
+  persons.forEach((p) => {
+    // Conexión con el Padre -> Llega al handle izquierdo ('father')
+    if (p.father_id && personIds.has(p.father_id)) {
+      edges.push({
+        id: `e-f-${p.father_id}-${p.id}`,
+        source: p.father_id,
+        target: p.id,
+        targetHandle: 'father', // <--- IMPORTANTE
+        type: 'smoothstep',
+        style: { stroke: '#38bdf8', strokeWidth: 2, opacity: 0.6 },
+      });
+    }
+
+    // Conexión con la Madre -> Llega al handle derecho ('mother')
+    if (p.mother_id && personIds.has(p.mother_id)) {
+      edges.push({
+        id: `e-m-${p.mother_id}-${p.id}`,
+        source: p.mother_id,
+        target: p.id,
+        targetHandle: 'mother', // <--- IMPORTANTE
+        type: 'smoothstep',
+        style: { stroke: '#fb7185', strokeWidth: 2, opacity: 0.6 },
+      });
+    }
   });
 
   return { nodes, edges };
@@ -306,6 +334,8 @@ function Sidebar({
       setUploadLoading(false);
     }
   };
+
+  
 
   // Sync form when selection or mode changes
   useEffect(() => {
@@ -717,6 +747,7 @@ export { PersonNode, buildGraphElements };
 export default function TreeEditor() {
   const { treeId } = useParams<{ treeId: string }>();
   const navigate = useNavigate();
+  const [showQRModal, setShowQRModal] = useState(false);
 
   const tree = useTreesStore((s) => s.selectedTree);
   const getTreeById = useTreesStore((s) => s.getTreeById);
@@ -786,6 +817,10 @@ export default function TreeEditor() {
       await updatePerson(selectedPerson.id, data as UpdatePersonDto);
     }
   };
+
+  const handleOpenPresentation = () => {
+    window.open(`${window.location.origin}/tree-viewer/${treeId}`)
+  }
 
   const handleDeletePerson = async (id: string) => {
     await deletePerson(id);
@@ -867,17 +902,30 @@ export default function TreeEditor() {
           </button>
           
           <button
-            onClick={openCreate}
+            onClick={() => setShowQRModal(true)}
             className="
               flex items-center gap-2 px-3 py-1.5 rounded-xl
               bg-teal-500/15 border border-teal-500/25 text-teal-300
               hover:bg-teal-500/25 transition-all text-xs font-medium
             "
           >
+            <Share2 size={16} />
             extender
+          </button>
+          <button
+            onClick={handleOpenPresentation}
+            className="
+              flex items-center gap-2 px-3 py-1.5 rounded-xl
+              bg-teal-500/15 border border-teal-500/25 text-teal-300
+              hover:bg-teal-500/25 transition-all text-xs font-medium
+            "
+          >
+            <Presentation size={13} />
+            Modo presentacion
           </button>
 
         </div>
+        
       </nav>
 
       {/* ── Main ────────────────────────────────────────────────────────────── */}
@@ -965,6 +1013,10 @@ export default function TreeEditor() {
           loading={personsLoading}
         />
       </div>
+      {showQRModal && treeId && (
+              <ExtensionQR treeId={treeId} onClose={() => setShowQRModal(false)} />
+      )}
     </div>
+    
   );
 }
