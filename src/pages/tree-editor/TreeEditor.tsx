@@ -136,18 +136,6 @@ function PersonNode({ data }: NodeProps) {
 
 export const nodeTypes = { person: PersonNode };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Layout engine — Reingold-Tilford recursivo
-//
-// Idea central:
-//   1. Cada nodo ocupa un "ancho" mínimo de NODE_W.
-//   2. El ancho real de un nodo es MAX(NODE_W, suma de anchos de sus hijos).
-//   3. Los hijos se distribuyen centrados bajo su padre.
-//   4. Las ramas nunca se solapan porque el ancho se propaga bottom-up.
-//   5. Si una persona tiene dos padres en el árbol se conecta solo al padre
-//      (o a la madre si no hay padre) para no duplicar ramas.
-// ─────────────────────────────────────────────────────────────────────────────
-
 const NODE_W = 230; // ancho del nodo + margen horizontal mínimo
 const NODE_H = 180; // alto del nodo + espacio vertical entre generaciones
 
@@ -161,9 +149,6 @@ function buildGraphElements(
 
   const personIds = new Set(persons.map((p) => p.id));
 
-  // ── 1. Construir mapa de hijos canonicos (un padre por hijo) ───────────────
-  // Para evitar doble conteo, cada hijo tiene UN padre canónico:
-  // preferimos father_id si existe en el árbol, si no mother_id.
   const canonicalParent = new Map<string, string>(); // childId → parentId
   const childrenOf      = new Map<string, string[]>(); // parentId → [childId]
 
@@ -193,10 +178,7 @@ function buildGraphElements(
   // nodos no alcanzados (ciclos o desconectados) → generación 0
   persons.forEach((p) => { if (!generationMap.has(p.id)) generationMap.set(p.id, 0); });
 
-  // ── 3. Calcular el "ancho de subárbol" de cada nodo (bottom-up) ────────────
-  // subtreeWidth(node) = max(NODE_W, Σ subtreeWidth(children))
-  // Se calcula en orden de generación descendente para garantizar
-  // que los hijos ya tienen su ancho calculado antes que los padres.
+  // Calcular el "ancho de subárbol" de cada nodo (bottom-up)
   const subtreeWidth = new Map<string, number>();
 
   const maxGen = Math.max(...Array.from(generationMap.values()));
@@ -215,8 +197,7 @@ function buildGraphElements(
       });
   }
 
-  // ── 4. Asignar posición X recursivamente (top-down) ────────────────────────
-  // Cada llamada recibe el "left bound" disponible para ese subárbol.
+  // Asignar posición X recursivamente (top-down)
   const positionMap = new Map<string, { x: number; y: number }>();
 
   function assignX(id: string, leftBound: number): void {
@@ -255,11 +236,11 @@ function buildGraphElements(
   const nodes: Node[] = persons.map((p) => {
     const pos = positionMap.get(p.id) ?? { x: 0, y: 0 };
     return {
-      id:       p.id,
-      type:     'person',
+      id: p.id,
+      type: 'person',
       position: pos,
       data: {
-        person:     p,
+        person: p,
         isSelected: selectedId === p.id,
         onSelect,
         generation: generationMap.get(p.id) ?? 0,
@@ -267,15 +248,15 @@ function buildGraphElements(
     };
   });
 
-  // ── 6. Construir edges ─────────────────────────────────────────────────────
+  // Construir edges
   const edges: Edge[] = [];
   canonicalParent.forEach((parentId, childId) => {
     edges.push({
-      id:     `e-${parentId}-${childId}`,
+      id: `e-${parentId}-${childId}`,
       source: parentId,
       target: childId,
-      type:   'smoothstep',
-      style:  { stroke: 'rgba(255,255,255,0.20)', strokeWidth: 1.5 },
+      type: 'smoothstep',
+      style: { stroke: 'rgba(255,255,255,0.20)', strokeWidth: 1.5 },
     });
   });
 
@@ -667,16 +648,12 @@ function Sidebar({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Componente principal TreeEditor
-// ─────────────────────────────────────────────────────────────────────────────
 export { PersonNode, buildGraphElements };
 
 export default function TreeEditor() {
   const { treeId } = useParams<{ treeId: string }>();
   const navigate = useNavigate();
 
-  // ── Stores ─────────────────────────────────────────────────────────────────
   const tree = useTreesStore((s) => s.selectedTree);
   const getTreeById = useTreesStore((s) => s.getTreeById);
 
@@ -694,31 +671,25 @@ export default function TreeEditor() {
   const createPartner = usePartnersStore((s) => s.createPartner);
   const deletePartner = usePartnersStore((s) => s.deletePartner);
 
-  // ── React Flow state ───────────────────────────────────────────────────────
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
-  // ── Sidebar mode ───────────────────────────────────────────────────────────
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>('idle');
 
-  // ── Redirect si no hay treeId ──────────────────────────────────────────────
   useEffect(() => {
     if (!treeId) navigate('/dashboard');
   }, [treeId, navigate]);
 
-  // ── Carga inicial ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (!treeId) return;
     getTreeById(treeId);
     getAllPersons(treeId);
   }, [treeId]);
 
-  // ── Cargar partners cuando cambian las personas ────────────────────────────
   useEffect(() => {
     persons.forEach((p) => getAllPartners(p.id));
   }, [persons.length]);
 
-  // ── Rebuild graph cuando cambian persons, partners o selección ─────────────
   const handleSelectNode = useCallback((person: Person) => {
     setSelectedPerson(person);
     setSidebarMode('edit');
@@ -778,11 +749,9 @@ export default function TreeEditor() {
     setSidebarMode('idle');
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="w-full h-screen bg-[#0a0c10] flex flex-col overflow-hidden">
 
-      {/* ── Navbar ──────────────────────────────────────────────────────────── */}
       <nav className="
         h-14 shrink-0 flex items-center justify-between
         px-5 bg-[#0f1117] border-b border-white/5

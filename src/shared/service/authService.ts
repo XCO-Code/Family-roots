@@ -1,7 +1,7 @@
 import { supabase } from '../../config/supabase/supabase';
 import type { AuthUser, AuthDto, AuthResponse } from '../models/authModel';
 
-const register = async (dto: AuthDto): Promise<AuthResponse> => {
+export const register = async (dto: AuthDto): Promise<AuthResponse> => {
   const { data, error } = await supabase.auth.signUp({
     email: dto.email,
     password: dto.password,
@@ -18,7 +18,7 @@ const register = async (dto: AuthDto): Promise<AuthResponse> => {
 };
 
 
-const login = async (dto: AuthDto): Promise<AuthResponse> => {
+export const login = async (dto: AuthDto): Promise<AuthResponse> => {
   const { data, error } = await supabase.auth.signInWithPassword({
     email: dto.email,
     password: dto.password,
@@ -34,14 +34,8 @@ const login = async (dto: AuthDto): Promise<AuthResponse> => {
 };
 
 
-const getCurrentUser = async (): Promise<AuthUser | null> => {
+export const getCurrentUser = async (): Promise<AuthUser | null> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   return { id: user.id, email: user.email ?? '' };
-};
-
-export const authService = {
-  register,
-  login,
-  getCurrentUser,
 };

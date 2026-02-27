@@ -18,10 +18,10 @@ interface TreesStore {
 }
 
 export const useTreesStore = create<TreesStore>((set) => ({
-  trees:        [],
+  trees: [],
   selectedTree: null,
-  loading:      false,
-  error:        null,
+  loading: false,
+  error: null,
 
   getAllTrees: async () => {
     set({ loading: true, error: null });

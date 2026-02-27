@@ -81,7 +81,6 @@ export default function Login() {
 
           {error && <p className="text-sm text-red-400">{error}</p>}
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading}

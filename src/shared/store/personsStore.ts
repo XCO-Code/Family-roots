@@ -19,10 +19,10 @@ interface PersonsStore {
 }
 
 export const usePersonsStore = create<PersonsStore>((set) => ({
-  persons:        [],
+  persons: [],
   selectedPerson: null,
-  loading:        false,
-  error:          null,
+  loading: false,
+  error: null,
 
   getAllPersons: async (tree_id) => {
     set({ loading: true, error: null });

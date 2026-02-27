@@ -27,7 +27,6 @@ export default function TreeViewer() {
     }
   }, [treeId, getTreeById, getAllPersons]);
 
-  // build react-flow graph when persons/partners change
   const [nodes, setNodes, onNodesChange] = useNodesState<RFNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<RFEdge>([]);
 

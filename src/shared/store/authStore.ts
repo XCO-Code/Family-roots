@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { authService } from '../service/authService';
+import { register, login, getCurrentUser } from '../service/authService';
 import type { AuthUser, AuthDto } from '../models/authModel';
 
 interface AuthStore {
@@ -16,15 +16,15 @@ interface AuthStore {
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
-  user:         null,
+  user: null,
   access_token: null,
-  loading:      false,
-  error:        null,
+  loading: false,
+  error: null,
 
   register: async (dto) => {
     set({ loading: true, error: null });
     try {
-      const response = await authService.register(dto);
+      const response = await register(dto);
       set({ user: response.user, access_token: response.access_token, loading: false });
     } catch (e) {
       set({ error: (e as Error).message, loading: false });
@@ -34,7 +34,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
   login: async (dto) => {
     set({ loading: true, error: null });
     try {
-      const response = await authService.login(dto);
+      const response = await login(dto);
       set({ user: response.user, access_token: response.access_token, loading: false });
     } catch (e) {
       set({ error: (e as Error).message, loading: false });
@@ -44,7 +44,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
   getCurrentUser: async () => {
     set({ loading: true, error: null });
     try {
-      const user = await authService.getCurrentUser();
+      const user = await getCurrentUser();
       set({ user, loading: false });
     } catch (e) {
       set({ error: (e as Error).message, loading: false });

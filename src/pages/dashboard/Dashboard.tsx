@@ -11,7 +11,7 @@ export default function Dashboard() {
   const trees = useTreesStore((s) => s.trees);
   const getAllTrees = useTreesStore((s) => s.getAllTrees);
 
-  // cambiar por el componentes para proteger la rama.
+  // TO DO: cambiar por el componentes para proteger la rama.
   useEffect(() => {
     if (!user) {
       navigate('/');

@@ -16,7 +16,6 @@ export default function CreateTree() {
     setError(null);
     try {
       const tree = await createTree({ name, description: description || undefined });
-      // after creation go to editor page
       navigate(`/tree-editor/${tree.id}`);
     } catch (e) {
       setError((e as Error).message);

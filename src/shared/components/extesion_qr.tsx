@@ -25,7 +25,7 @@ export function ExtensionQR({ treeId, onClose }: ExtensionQRProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl p-8 max-w-sm w-full mx-4">
-        {/* Header */}
+
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-800">Compartir Árbol Familiar</h2>
           <button
@@ -37,7 +37,6 @@ export function ExtensionQR({ treeId, onClose }: ExtensionQRProps) {
           </button>
         </div>
 
-        {/* QR Code */}
         <div className="flex justify-center mb-8 bg-gray-50 p-6 rounded-lg">
           <QRCode
             value={treeUrl}
@@ -46,7 +45,6 @@ export function ExtensionQR({ treeId, onClose }: ExtensionQRProps) {
           />
         </div>
 
-        {/* URL Input */}
         <div className="space-y-3">
           <label htmlFor="tree-url" className="block text-sm font-medium text-gray-700">
             Enlace del árbol:
@@ -74,7 +72,6 @@ export function ExtensionQR({ treeId, onClose }: ExtensionQRProps) {
           </div>
         </div>
 
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="w-full mt-6 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition-colors"

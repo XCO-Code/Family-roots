@@ -19,18 +19,24 @@ interface PartnersStore {
 }
 
 export const usePartnersStore = create<PartnersStore>((set) => ({
-  partners:        [],
+  partners: [],
   selectedPartner: null,
-  loading:         false,
-  error:           null,
+  loading: false,
+  error: null,
 
   getAllPartners: async (person_id) => {
-    set({ loading: true, error: null });
     try {
-      const partners = await partnersService.getAllPartners(person_id);
-      set({ partners, loading: false });
+      const fresh = await partnersService.getAllPartners(person_id);
+      set((state) => {
+        const others = state.partners.filter(
+          (p) => p.person_id !== person_id && p.partner_id !== person_id,
+        );
+        const merged = [...others, ...fresh];
+        const unique = Array.from(new Map(merged.map((p) => [p.id, p])).values());
+        return { partners: unique };
+      });
     } catch (e) {
-      set({ error: (e as Error).message, loading: false });
+      set({ error: (e as Error).message });
     }
   },
 
@@ -48,7 +54,12 @@ export const usePartnersStore = create<PartnersStore>((set) => ({
     set({ loading: true, error: null });
     try {
       const newPartner = await partnersService.createPartner(dto);
-      set((state) => ({ partners: [...state.partners, newPartner], loading: false }));
+      set((state) => ({
+        loading: false,
+        partners: state.partners.some((p) => p.id === newPartner.id)
+          ? state.partners
+          : [...state.partners, newPartner],
+      }));
     } catch (e) {
       set({ error: (e as Error).message, loading: false });
     }
@@ -83,8 +94,6 @@ export const usePartnersStore = create<PartnersStore>((set) => ({
   },
 
   setSelected: (partner) => set({ selectedPartner: partner }),
-
   clearPartners: () => set({ partners: [], selectedPartner: null }),
-
   clearError: () => set({ error: null }),
 }));

@@ -1,9 +1,3 @@
-// src/pages/Extension/Extension.tsx
-//
-// Ruta esperada: /extension/:treeId
-// Al enviar: crea la persona directamente en Supabase
-//            y redirige a /tree-viewer/:treeId
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -22,29 +16,21 @@ import {
 import { usePersonsStore } from '../../shared/store/personsStore';
 import type { CreatePersonDto, Gender } from '../../shared/models/personModel';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
 const GENDER_OPTIONS: { value: Gender; label: string; icon: string }[] = [
   { value: 'male',   label: 'Masculino', icon: '♂' },
   { value: 'female', label: 'Femenino',  icon: '♀' },
   { value: 'other',  label: 'Otro',      icon: '⚧' },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Componente
-// ─────────────────────────────────────────────────────────────────────────────
 export default function Extension() {
   const { treeId } = useParams<{ treeId: string }>();
   const navigate = useNavigate();
 
-  // ── Store ──────────────────────────────────────────────────────────────────
   const persons = usePersonsStore((s) => s.persons);
   const getAllPersons = usePersonsStore((s) => s.getAllPersons);
   const createPerson = usePersonsStore((s) => s.createPerson);
   const personsLoading = usePersonsStore((s) => s.loading);
 
-  // ── Estado del formulario ──────────────────────────────────────────────────
   const [form, setForm] = useState<Omit<CreatePersonDto, 'tree_id'>>({
     name: '',
     gender: 'male',
@@ -59,16 +45,13 @@ export default function Extension() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // ── Cargar personas del árbol para los selects ─────────────────────────────
   useEffect(() => {
     if (treeId) getAllPersons(treeId);
   }, [treeId]);
 
-  // ── Opciones de padre (hombres del árbol) y madre (mujeres) ───────────────
-  const fatherOptions = persons.filter((p) => p.gender === 'male'   || p.gender === 'other');
+  const fatherOptions = persons.filter((p) => p.gender === 'male' || p.gender === 'other');
   const motherOptions = persons.filter((p) => p.gender === 'female' || p.gender === 'other');
 
-  // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!treeId) return;
@@ -77,7 +60,6 @@ export default function Extension() {
     setErrorMsg('');
 
     try {
-      // Limpiar campos vacíos para no enviar strings vacíos a Supabase
       const dto: CreatePersonDto = {
         tree_id: treeId,
         name: form.name,
@@ -93,7 +75,6 @@ export default function Extension() {
       await createPerson(dto);
       setStatus('success');
 
-      // Redirigir al tree-viewer tras 1.2 s para que el usuario vea el éxito
       setTimeout(() => navigate(`/tree-viewer/${treeId}`), 1200);
     } catch (err) {
       setStatus('error');
@@ -105,7 +86,6 @@ export default function Extension() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setForm((f) => ({ ...f, [field]: e.target.value }));
 
-  // ── Pantalla de éxito ──────────────────────────────────────────────────────
   if (status === 'success') {
     return (
       <main className="min-h-screen bg-[#0a0c10] flex items-center justify-center p-4">
@@ -120,14 +100,11 @@ export default function Extension() {
     );
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <main className="min-h-screen bg-[#0a0c10] flex flex-col items-center justify-start py-10 px-4">
 
-      {/* ── Contenedor ──────────────────────────────────────────────────────── */}
       <div className="w-full max-w-xl">
 
-        {/* Back */}
         <button
           onClick={() => navigate(`/tree-viewer/${treeId}`)}
           className="flex items-center gap-2 text-white/40 hover:text-white/80 transition-colors text-sm mb-8"
@@ -353,9 +330,6 @@ export default function Extension() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Sub-componentes de UI
-// ─────────────────────────────────────────────────────────────────────────────
 function Section({
   icon, title, children,
 }: {
