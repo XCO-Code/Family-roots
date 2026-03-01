@@ -35,7 +35,7 @@ export default function Dashboard() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-7 h-7 rounded-lg bg-[#1a1d24] border border-purple-500/30 flex items-center justify-center">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-br from-purple-500 to-green-500" />
+              <img src="/favicon/web-app-manifest-512x512.png" alt="" className='p-1' />
             </div>
             <span className="text-sm font-semibold text-white/40 tracking-widest uppercase hidden sm:block">Family Roots</span>
           </div>

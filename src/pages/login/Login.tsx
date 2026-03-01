@@ -27,7 +27,7 @@ export default function Login() {
         {/* Logo mark */}
         <div className="flex items-center gap-3 mb-8">
           <div className="w-10 h-10 rounded-xl bg-[#1a1d24] border border-purple-500/30 flex items-center justify-center">
-            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-purple-500 to-green-500" />
+            <img src="/favicon/web-app-manifest-192x192.png" alt="" className='p-1' />
           </div>
           <span className="text-sm font-semibold text-white/40 tracking-widest uppercase">Family Roots</span>
         </div>
