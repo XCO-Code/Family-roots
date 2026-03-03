@@ -2,16 +2,33 @@ import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../shared/store/authStore';
 import { useTreesStore } from '../../shared/store/treesStore';
+import { supabase } from '../../config/supabase/supabase';
 import { LogOut, Plus, Trees, ChevronRight } from 'lucide-react';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const setUser = useAuthStore((s) => s.setUser);
   const trees = useTreesStore((s) => s.trees);
   const getTreesByUserId = useTreesStore((s) => s.getTreesByUserId);
-  const reset = useAuthStore((state) => state.reset)
+  const reset = useAuthStore((state) => state.reset);
 
+  // Detecta cuando el usuario llega desde el link de confirmación de email
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        setUser(
+          { id: session.user.id, email: session.user.email ?? '' },
+          session.access_token
+        );
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [setUser]);
+
+  // Redirige si no hay usuario autenticado
   useEffect(() => {
     if (!user) {
       navigate('/');
@@ -22,9 +39,8 @@ export default function Dashboard() {
 
   const handleLogout = () => {
     logout();
-    reset()
+    reset();
     navigate('/');
-
   };
 
   return (
@@ -87,7 +103,7 @@ export default function Dashboard() {
               </Link>
             </div>
           </div>
-          
+
           <div className="lg:col-span-2">
             {trees.length === 0 ? (
               <div className="bg-[#1a1d24] border border-white/5 rounded-2xl p-10 sm:p-14 flex flex-col items-center justify-center text-center gap-5">

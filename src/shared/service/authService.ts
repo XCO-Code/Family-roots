@@ -5,18 +5,19 @@ export const register = async (dto: AuthDto): Promise<AuthResponse> => {
   const { data, error } = await supabase.auth.signUp({
     email: dto.email,
     password: dto.password,
+    options: {
+      emailRedirectTo: 'https://family-roots-xi.vercel.app/dashboard',
+    },
   });
 
   if (error) throw new Error(error.message);
   if (!data.user) throw new Error('No se pudo crear el usuario.');
-  if (!data.session) throw new Error('Confirma tu email para activar la cuenta.');
 
   return {
     user: { id: data.user.id, email: data.user.email ?? '' },
-    access_token: data.session.access_token,
+    access_token: data.session?.access_token ?? '',
   };
 };
-
 
 export const login = async (dto: AuthDto): Promise<AuthResponse> => {
   const { data, error } = await supabase.auth.signInWithPassword({

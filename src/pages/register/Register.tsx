@@ -24,7 +24,6 @@ export default function Register() {
     <main className="min-h-screen bg-[#0a0c10] flex items-center justify-center font-sans px-4">
       <div className="w-full max-w-sm">
 
-        {/* Logo mark */}
         <div className="flex items-center gap-3 mb-8">
           <div className="w-10 h-10 rounded-xl bg-[#1a1d24] border border-purple-500/30 flex items-center justify-center">
             <img src="/favicon/web-app-manifest-192x192.png" alt="" className='p-1' />
