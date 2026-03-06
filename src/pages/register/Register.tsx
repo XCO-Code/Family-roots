@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useAuthStore } from '../../shared/store/authStore';
+import { registerSchema, type RegisterFormData } from './schema/registerSchema';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -11,10 +12,25 @@ export default function Register() {
   const [showPass, setShowPass] = useState(false);
   const loading = useAuthStore((s) => s.loading);
   const error = useAuthStore((s) => s.error);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof RegisterFormData, string>>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await register({ email, password });
+    setFieldErrors({});
+
+    const result = registerSchema.safeParse({ email, password });
+
+    if (!result.success) {
+      const errors: Partial<Record<keyof RegisterFormData, string>> = {};
+      result.error.issues.forEach((err) => {
+        const field = err.path[0] as keyof RegisterFormData;
+        if (!errors[field]) errors[field] = err.message;
+      });
+      setFieldErrors(errors);
+      return;
+    }
+
+    await register(result.data);
     if (!error) {
       navigate('/dashboard');
     }
@@ -50,9 +66,16 @@ export default function Register() {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl text-sm bg-[#111318] border border-white/8 text-white placeholder-white/20 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/15 transition-all"
+                  className={`w-full pl-9 pr-3 py-2.5 rounded-xl text-sm bg-[#111318] border text-white placeholder-white/20 focus:outline-none focus:ring-1 transition-all ${
+                    fieldErrors.email
+                      ? 'border-orange-500/50 focus:border-orange-500/50 focus:ring-orange-500/15'
+                      : 'border-white/8 focus:border-purple-500/50 focus:ring-purple-500/15'
+                  }`}
                 />
               </div>
+              {fieldErrors.email && (
+                <p className="text-xs text-orange-400">{fieldErrors.email}</p>
+              )}
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -67,7 +90,11 @@ export default function Register() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
-                  className="w-full pl-9 pr-9 py-2.5 rounded-xl text-sm bg-[#111318] border border-white/8 text-white placeholder-white/20 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/15 transition-all"
+                  className={`w-full pl-9 pr-9 py-2.5 rounded-xl text-sm bg-[#111318] border text-white placeholder-white/20 focus:outline-none focus:ring-1 transition-all ${
+                    fieldErrors.password
+                      ? 'border-orange-500/50 focus:border-orange-500/50 focus:ring-orange-500/15'
+                      : 'border-white/8 focus:border-purple-500/50 focus:ring-purple-500/15'
+                  }`}
                 />
                 <button
                   type="button"
@@ -77,6 +104,9 @@ export default function Register() {
                   {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
+              {fieldErrors.password && (
+                <p className="text-xs text-orange-400">{fieldErrors.password}</p>
+              )}
             </div>
 
             {error && (
