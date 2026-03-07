@@ -1,24 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Send,
-  User,
-  Calendar,
-  FileText,
-  ImageIcon,
-  Users,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
+  Send, User, Calendar, FileText, ImageIcon,
+  Users, Loader2, CheckCircle2, AlertCircle,
 } from 'lucide-react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 import { usePersonsStore } from '../../shared/store/personsStore';
 import { uploadImageByTree } from '../../shared/service/imageService';
-import type { CreatePersonDto, Gender } from '../../shared/models/personModel';
+import type { CreatePersonDto } from '../../shared/models/personModel';
+import { createPersonSchema, type CreatePersonFormData } from '../../shared/schema/createPersonSchema';
 
-const GENDER_OPTIONS: { value: Gender; label: string; icon: string }[] = [
-  { value: 'male', label: 'Masculino', icon: '♂' },
-  { value: 'female', label: 'Femenino', icon: '♀' },
+const GENDER_OPTIONS = [
+  { value: 'male' as const, label: 'Masculino', icon: '♂' },
+  { value: 'female' as const, label: 'Femenino', icon: '♀' },
 ];
 
 export default function Extension() {
@@ -30,34 +26,23 @@ export default function Extension() {
   const createPerson = usePersonsStore((s) => s.createPerson);
   const personsLoading = usePersonsStore((s) => s.loading);
 
-  const [form, setForm] = useState<Omit<CreatePersonDto, 'tree_id'>>({
-    name: '',
-    gender: 'male',
-    born: '',
-    died: '',
-    photo_url: '',
-    bio: '',
-    father_id: '',
-    mother_id: '',
-  });
-
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [uploadLoading, setUploadLoading] = useState(false);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !treeId) return;
-    setUploadLoading(true);
-    try {
-      const url = await uploadImageByTree(treeId, file);
-      setForm((f) => ({ ...f, photo_url: url }));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setUploadLoading(false);
-    }
-  };
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<CreatePersonFormData>({
+    resolver: zodResolver(createPersonSchema),
+    defaultValues: { gender: 'male' },
+  });
+
+  const photoUrl = watch('photo_url');
 
   useEffect(() => {
     if (treeId) getAllPersons(treeId);
@@ -66,39 +51,45 @@ export default function Extension() {
   const fatherOptions = persons.filter((p) => p.gender === 'male');
   const motherOptions = persons.filter((p) => p.gender === 'female');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!treeId) return;
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !treeId) return;
+    setUploadLoading(true);
+    try {
+      const url = await uploadImageByTree(treeId, file);
+      setValue('photo_url', url);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUploadLoading(false);
+    }
+  };
 
-    setStatus('loading');
+  const onSubmit = async (data: CreatePersonFormData) => {
+    if (!treeId) return;
     setErrorMsg('');
 
     try {
       const dto: CreatePersonDto = {
         tree_id: treeId,
-        name: form.name,
-        gender: form.gender,
-        ...(form.born && { born: form.born }),
-        ...(form.died && { died: form.died }),
-        ...(form.photo_url && { photo_url: form.photo_url }),
-        ...(form.bio && { bio: form.bio }),
-        ...(form.father_id && { father_id: form.father_id }),
-        ...(form.mother_id && { mother_id: form.mother_id }),
+        name: data.name,
+        gender: data.gender,
+        ...(data.born && { born: data.born }),
+        ...(data.died && { died: data.died }),
+        ...(data.photo_url && { photo_url: data.photo_url }),
+        ...(data.bio && { bio: data.bio }),
+        ...(data.father_id && { father_id: data.father_id }),
+        ...(data.mother_id && { mother_id: data.mother_id }),
       };
 
       await createPerson(dto);
       setStatus('success');
-
       setTimeout(() => navigate(`/tree-viewer/${treeId}`), 1200);
     } catch (err) {
       setStatus('error');
       setErrorMsg((err as Error).message ?? 'Error al crear la persona');
     }
   };
-
-  const set = (field: keyof typeof form) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-      setForm((f) => ({ ...f, [field]: e.target.value }));
 
   if (status === 'success') {
     return (
@@ -116,7 +107,6 @@ export default function Extension() {
 
   return (
     <main className="min-h-screen bg-[#0a0c10] flex flex-col items-center justify-start py-10 px-4">
-
       <div className="w-full max-w-xl">
 
         {/* Header */}
@@ -141,75 +131,75 @@ export default function Extension() {
           </div>
         )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
 
-          {/* ── Sección: Datos básicos ──────────────────────────────────────── */}
           <Section icon={<User size={14} />} title="Datos básicos">
 
-            {/* Nombre */}
-            <Field label="Nombre completo *">
+            <Field label="Nombre completo *" error={errors.name?.message}>
               <input
+                {...register('name')}
                 type="text"
                 placeholder="Ej: María García Pérez"
-                value={form.name}
-                onChange={set('name')}
-                required
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-purple-500/50 focus:bg-white/8 transition-all"
+                className={`w-full bg-white/5 border rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:bg-white/8 transition-all ${
+                  errors.name
+                    ? 'border-orange-500/50 focus:border-orange-500/50'
+                    : 'border-white/10 focus:border-purple-500/50'
+                }`}
               />
             </Field>
 
-            {/* Género */}
             <Field label="Género *">
-              <div className="grid grid-cols-3 gap-2">
-                {GENDER_OPTIONS.map((g) => (
-                  <button
-                    key={g.value}
-                    type="button"
-                    onClick={() => setForm((f) => ({ ...f, gender: g.value }))}
-                    className={`
-                      py-2.5 rounded-xl text-sm font-medium border transition-all
-                      ${form.gender === g.value
-                        ? g.value === 'male'
-                          ? 'bg-sky-500/20 border-sky-400/50 text-sky-300'
-                          : g.value === 'female'
-                          ? 'bg-rose-500/20 border-rose-400/50 text-rose-300'
-                          : 'bg-slate-500/20 border-slate-400/50 text-slate-300'
-                        : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/8'
-                      }
-                    `}
-                  >
-                    {g.icon} {g.label}
-                  </button>
-                ))}
-              </div>
+              <Controller
+                control={control}
+                name="gender"
+                render={({ field }) => (
+                  <div className="grid grid-cols-3 gap-2">
+                    {GENDER_OPTIONS.map((g) => (
+                      <button
+                        key={g.value}
+                        type="button"
+                        onClick={() => field.onChange(g.value)}
+                        className={`
+                          py-2.5 rounded-xl text-sm font-medium border transition-all
+                          ${field.value === g.value
+                            ? g.value === 'male'
+                              ? 'bg-sky-500/20 border-sky-400/50 text-sky-300'
+                              : 'bg-rose-500/20 border-rose-400/50 text-rose-300'
+                            : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/8'
+                          }
+                        `}
+                      >
+                        {g.icon} {g.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              />
             </Field>
 
           </Section>
 
-          {/* ── Sección: Fechas ─────────────────────────────────────────────── */}
+          {/* ── Fechas ── */}
           <Section icon={<Calendar size={14} />} title="Fechas">
             <div className="grid grid-cols-2 gap-4">
               <Field label="Fecha de nacimiento">
                 <input
+                  {...register('born')}
                   type="date"
-                  value={form.born ?? ''}
-                  onChange={set('born')}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-all"
                 />
               </Field>
               <Field label="Fecha de fallecimiento">
                 <input
+                  {...register('died')}
                   type="date"
-                  value={form.died ?? ''}
-                  onChange={set('died')}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-all"
                 />
               </Field>
             </div>
           </Section>
 
-          {/* ── Sección: Relaciones familiares ──────────────────────────────── */}
+          {/* ── Relaciones familiares ── */}
           <Section icon={<Users size={14} />} title="Relaciones familiares">
             {personsLoading ? (
               <div className="flex items-center gap-2 text-white/30 text-sm py-2">
@@ -222,40 +212,36 @@ export default function Extension() {
               </p>
             ) : (
               <>
-                {/* Padre */}
                 <Field
                   label="Padre"
                   hint={fatherOptions.length === 0 ? 'No hay hombres en el árbol aún' : undefined}
                 >
                   <select
-                    value={form.father_id ?? ''}
-                    onChange={set('father_id')}
+                    {...register('father_id')}
                     disabled={fatherOptions.length === 0}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-all appearance-none disabled:opacity-30"
                   >
-                    <option value="" className='bg-neutral-900'>— Sin padre registrado —</option>
+                    <option value="" className="bg-neutral-900">— Sin padre registrado —</option>
                     {fatherOptions.map((p) => (
-                      <option key={p.id} value={p.id} className='bg-neutral-900'>
+                      <option key={p.id} value={p.id} className="bg-neutral-900">
                         {p.name}{p.born ? ` (n. ${p.born})` : ''}
                       </option>
                     ))}
                   </select>
                 </Field>
 
-                {/* Madre */}
                 <Field
                   label="Madre"
                   hint={motherOptions.length === 0 ? 'No hay mujeres en el árbol aún' : undefined}
                 >
                   <select
-                    value={form.mother_id ?? ''}
-                    onChange={set('mother_id')}
+                    {...register('mother_id')}
                     disabled={motherOptions.length === 0}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500/50 transition-all appearance-none disabled:opacity-30"
                   >
-                    <option value="" className='bg-neutral-900'>— Sin madre registrada —</option>
+                    <option value="" className="bg-neutral-900">— Sin madre registrada —</option>
                     {motherOptions.map((p) => (
-                      <option key={p.id} value={p.id} className='bg-neutral-900'>
+                      <option key={p.id} value={p.id} className="bg-neutral-900">
                         {p.name}{p.born ? ` (n. ${p.born})` : ''}
                       </option>
                     ))}
@@ -265,15 +251,15 @@ export default function Extension() {
             )}
           </Section>
 
-          {/* ── Sección: Info adicional ──────────────────────────────────────── */}
+          {/* ── Info adicional ── */}
           <Section icon={<FileText size={14} />} title="Información adicional">
 
             <Field label="Foto">
               <div className="flex gap-3 items-center">
                 <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 shrink-0 overflow-hidden flex items-center justify-center">
-                  {form.photo_url ? (
+                  {photoUrl ? (
                     <img
-                      src={form.photo_url}
+                      src={photoUrl}
                       alt="preview"
                       className="w-full h-full object-cover"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -302,7 +288,7 @@ export default function Extension() {
                     ) : (
                       <>
                         <ImageIcon size={14} />
-                        {form.photo_url ? 'Cambiar foto' : 'Subir foto'}
+                        {photoUrl ? 'Cambiar foto' : 'Subir foto'}
                       </>
                     )}
                     <input
@@ -313,10 +299,10 @@ export default function Extension() {
                       disabled={uploadLoading}
                     />
                   </label>
-                  {form.photo_url && (
+                  {photoUrl && (
                     <button
                       type="button"
-                      onClick={() => setForm((f) => ({ ...f, photo_url: '' }))}
+                      onClick={() => setValue('photo_url', '')}
                       className="text-xs text-red-400/50 hover:text-red-400 transition-colors text-left"
                     >
                       Quitar foto
@@ -326,13 +312,14 @@ export default function Extension() {
               </div>
             </Field>
 
-            <Field label="Biografía / notas">
+            <Field label="Biografía / notas" error={errors.bio?.message}>
               <textarea
+                {...register('bio')}
                 rows={3}
                 placeholder="Breve descripción, anécdotas, lugar de origen..."
-                value={form.bio ?? ''}
-                onChange={set('bio')}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-purple-500/50 transition-all resize-none"
+                className={`w-full bg-white/5 border rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-purple-500/50 transition-all resize-none ${
+                  errors.bio ? 'border-orange-500/50' : 'border-white/10'
+                }`}
               />
             </Field>
 
@@ -340,7 +327,7 @@ export default function Extension() {
 
           <button
             type="submit"
-            disabled={status === 'loading' || !form.name.trim()}
+            disabled={isSubmitting}
             className="
               w-full flex items-center justify-center gap-2
               py-3 rounded-xl font-semibold text-sm
@@ -349,7 +336,7 @@ export default function Extension() {
               disabled:opacity-40 disabled:cursor-not-allowed
             "
           >
-            {status === 'loading' ? (
+            {isSubmitting ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
                 Creando persona...
@@ -368,9 +355,7 @@ export default function Extension() {
   );
 }
 
-function Section({
-  icon, title, children,
-}: {
+function Section({ icon, title, children }: {
   icon: React.ReactNode;
   title: string;
   children: React.ReactNode;
@@ -386,11 +371,10 @@ function Section({
   );
 }
 
-function Field({
-  label, hint, children,
-}: {
+function Field({ label, hint, error, children }: {
   label: string;
   hint?: string;
+  error?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -398,6 +382,7 @@ function Field({
       <label className="text-xs text-white/40 font-medium">{label}</label>
       {children}
       {hint && <p className="text-xs text-white/20">{hint}</p>}
+      {error && <p className="text-xs text-orange-400">{error}</p>}
     </div>
   );
 }
