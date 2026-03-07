@@ -1,43 +1,23 @@
-import { useState } from 'react';
-import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trees } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useTreesStore } from '../../shared/store/treesStore';
 import { useAuthStore } from '../../shared/store/authStore';
 import { createTreeSchema, type CreateTreeFormData } from './schema/createTreeSchema';
 
 export default function CreateTree() {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof CreateTreeFormData, string>>>({});
-  const [submitError, setSubmitError] = useState<string | null>(null);
   const createTree = useTreesStore((s) => s.createTree);
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setFieldErrors({});
-    setSubmitError(null);
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<CreateTreeFormData>({
+    resolver: zodResolver(createTreeSchema),
+  });
 
-    const result = createTreeSchema.safeParse({ name, description: description || undefined });
-
-    if (!result.success) {
-      const errors: Partial<Record<keyof CreateTreeFormData, string>> = {};
-      result.error.issues.forEach((err) => {
-        const field = err.path[0] as keyof CreateTreeFormData;
-        if (!errors[field]) errors[field] = err.message;
-      });
-      setFieldErrors(errors);
-      return;
-    }
-
-    try {
-      const tree = await createTree({ ...result.data, user_id: user?.id! });
-      navigate(`/tree-editor/${tree.id}`);
-    } catch (e) {
-      setSubmitError((e as Error).message);
-    }
+  const onSubmit = async (data: CreateTreeFormData) => {
+    const tree = await createTree({ ...data, user_id: user?.id! });
+    navigate(`/tree-editor/${tree.id}`);
   };
 
   return (
@@ -75,33 +55,23 @@ export default function CreateTree() {
 
           <div className="bg-[#1a1d24] border border-white/5 rounded-2xl p-6">
 
-            {submitError && (
-              <p className="text-xs text-orange-400 bg-orange-500/10 border border-orange-500/20 rounded-lg px-3 py-2 mb-4">
-                {submitError}
-              </p>
-            )}
-
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-white/40 uppercase tracking-widest">
                   Nombre *
                 </label>
                 <input
+                  {...register('name')}
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
                   placeholder="Ej: Familia García"
-                  required
                   className={`w-full px-3 py-2.5 rounded-xl text-sm bg-[#111318] border text-white placeholder-white/20 focus:outline-none focus:ring-1 transition-all ${
-                    fieldErrors.name
+                    errors.name
                       ? 'border-orange-500/50 focus:border-orange-500/50 focus:ring-orange-500/15'
                       : 'border-white/8 focus:border-purple-500/50 focus:ring-purple-500/15'
                   }`}
                 />
-                {fieldErrors.name && (
-                  <p className="text-xs text-orange-400">{fieldErrors.name}</p>
-                )}
+                {errors.name && <p className="text-xs text-orange-400">{errors.name.message}</p>}
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -109,24 +79,21 @@ export default function CreateTree() {
                   Descripción <span className="normal-case text-white/20">(opcional)</span>
                 </label>
                 <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  {...register('description')}
                   placeholder="Breve descripción del árbol..."
                   rows={3}
                   className={`w-full px-3 py-2.5 rounded-xl text-sm resize-none bg-[#111318] border text-white placeholder-white/20 focus:outline-none focus:ring-1 transition-all ${
-                    fieldErrors.description
+                    errors.description
                       ? 'border-orange-500/50 focus:border-orange-500/50 focus:ring-orange-500/15'
                       : 'border-white/8 focus:border-purple-500/50 focus:ring-purple-500/15'
                   }`}
                 />
-                {fieldErrors.description && (
-                  <p className="text-xs text-orange-400">{fieldErrors.description}</p>
-                )}
+                {errors.description && <p className="text-xs text-orange-400">{errors.description.message}</p>}
               </div>
 
               <button
                 type="submit"
-                disabled={!name.trim()}
+                disabled={isSubmitting}
                 className="
                   w-full py-2.5 rounded-xl text-sm font-semibold mt-1
                   bg-green-500/20 border border-green-500/30 text-green-300

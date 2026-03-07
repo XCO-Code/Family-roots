@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '../../shared/store/authStore';
 import { loginSchema, type LoginFormData } from './schema/loginSchema';
 
@@ -9,31 +11,15 @@ export default function Login() {
   const login = useAuthStore((s) => s.login);
   const loading = useAuthStore((s) => s.loading);
   const error = useAuthStore((s) => s.error);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof LoginFormData, string>>>({});
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFieldErrors({});
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
 
-    const result = loginSchema.safeParse({ email, password });
-
-    if (!result.success) {
-      const errors: Partial<Record<keyof LoginFormData, string>> = {};
-      result.error.issues.forEach((err) => {
-        const field = err.path[0] as keyof LoginFormData;
-        if (!errors[field]) errors[field] = err.message;
-      });
-      setFieldErrors(errors);
-      return;
-    }
-
-    await login(result.data);
-    if (!error) {
-      navigate('/dashboard');
-    }
+  const onSubmit = async (data: LoginFormData) => {
+    await login(data);
+    if (!error) navigate('/dashboard');
   };
 
   return (
@@ -52,7 +38,7 @@ export default function Login() {
           <h1 className="text-2xl font-bold text-white mb-1">Iniciar sesión</h1>
           <p className="text-sm text-white/35 mb-7">Bienvenido de nuevo</p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
 
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-white/40 uppercase tracking-widest">
@@ -61,21 +47,17 @@ export default function Login() {
               <div className="relative">
                 <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none" />
                 <input
+                  {...register('email')}
                   type="email"
                   placeholder="correo@ejemplo.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
                   className={`w-full pl-9 pr-3 py-2.5 rounded-xl text-sm bg-[#111318] border text-white placeholder-white/20 focus:outline-none focus:ring-1 transition-all ${
-                    fieldErrors.email
+                    errors.email
                       ? 'border-orange-500/50 focus:border-orange-500/50 focus:ring-orange-500/15'
                       : 'border-white/8 focus:border-purple-500/50 focus:ring-purple-500/15'
                   }`}
                 />
               </div>
-              {fieldErrors.email && (
-                <p className="text-xs text-orange-400">{fieldErrors.email}</p>
-              )}
+              {errors.email && <p className="text-xs text-orange-400">{errors.email.message}</p>}
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -85,13 +67,11 @@ export default function Login() {
               <div className="relative">
                 <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none" />
                 <input
+                  {...register('password')}
                   type={showPass ? 'text' : 'password'}
                   placeholder="••••••••"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
                   className={`w-full pl-9 pr-9 py-2.5 rounded-xl text-sm bg-[#111318] border text-white placeholder-white/20 focus:outline-none focus:ring-1 transition-all ${
-                    fieldErrors.password
+                    errors.password
                       ? 'border-orange-500/50 focus:border-orange-500/50 focus:ring-orange-500/15'
                       : 'border-white/8 focus:border-purple-500/50 focus:ring-purple-500/15'
                   }`}
@@ -104,9 +84,7 @@ export default function Login() {
                   {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
-              {fieldErrors.password && (
-                <p className="text-xs text-orange-400">{fieldErrors.password}</p>
-              )}
+              {errors.password && <p className="text-xs text-orange-400">{errors.password.message}</p>}
             </div>
 
             {error && (
